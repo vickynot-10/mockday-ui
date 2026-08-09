@@ -9,7 +9,7 @@ export const navData: NavItem[] = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/" },
   { title: "Resumes", icon: FileText, href: "/resumes" },
   { title: "Applications", icon: Briefcase, href: "/applications" },
-  { title: "Autofill Rules", icon: Wand2, href: "/autofill-rules" },
+  { title: "Autofill Rules", icon: Wand2, href: "/autofill" },
 ];
 
 export default function AppSidebar() {
