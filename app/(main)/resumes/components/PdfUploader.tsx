@@ -1,30 +1,53 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Upload, X, FileText, Loader2, Check } from "lucide-react";
 import { api } from "@/utils/axios";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 
-const MAX_FILES = 5;
+const MAX_FILES = 3;
 
 type FileEntry = {
   file: File;
-  status: "uploading" | "done" | "error";
+  status: "uploading" | "uploaded" | "error";
+  file_id?: string;
+  key?: string;
 };
 
 function formatSize(bytes: number) {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
+function getErrorMessage(err: unknown, fallback: string) {
+  if (isAxiosError(err)) {
+    return err.response?.data?.error ?? fallback;
+  }
+  return fallback;
+}
+
 export default function PdfUploader({ onDone }: { onDone?: () => void }) {
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const entriesRef = useRef<FileEntry[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [deletedFileIds, setDeletedFileIds] = useState<string[]>([]);
 
   const updateEntryStatus = (file: File, status: FileEntry["status"]) => {
     entriesRef.current = entriesRef.current.map((e) =>
       e.file === file ? { ...e, status } : e,
+    );
+    setEntries(entriesRef.current);
+  };
+
+  const updateEntryMeta = (
+    file: File,
+    meta: { file_id: string; key: string },
+  ) => {
+    entriesRef.current = entriesRef.current.map((e) =>
+      e.file === file ? { ...e, ...meta } : e,
     );
     setEntries(entriesRef.current);
   };
@@ -34,28 +57,19 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
       const urlRes = await api.post("/upload/get-urls", {
         filenames: [file.name],
       });
-      const { upload_url, file_id, key, filename } = urlRes.data.files[0];
+      const { upload_url, file_id, key } = urlRes.data.data.files[0];
 
       await fetch(upload_url, {
         method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
         body: file,
       });
-      //   await fetch(upload_url, {
-      //     method: "PUT",
-      //     headers: { "Content-Type": "application/pdf" },
-      //     body: file,
-      //   });
 
-      await api.post("/upload/confirm", {
-        files: [{ filename, file_id, key }],
-      });
-
-      updateEntryStatus(file, "done");
-      toast.success(`${file.name} uploaded`);
-      onDone?.();
-    } catch {
+      updateEntryMeta(file, { file_id, key });
+      updateEntryStatus(file, "uploaded");
+    } catch (err) {
       updateEntryStatus(file, "error");
-      toast.error(`${file.name} failed to upload`);
+      toast.error(getErrorMessage(err, `${file.name} failed to upload`));
     }
   };
 
@@ -66,14 +80,20 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
     );
 
     if (valid.length !== incoming.length) {
-      toast.error("Only PDF files are allowed");
+      return toast.error("Only PDF files are allowed");
     }
 
     const room = MAX_FILES - entriesRef.current.length;
+
+    if (room <= 0) {
+      toast.error(`Max ${MAX_FILES} resumes allowed`);
+      return;
+    }
+
     const accepted = valid.slice(0, room);
 
     if (valid.length > room) {
-      toast.error(`Max ${MAX_FILES} files allowed`);
+      toast.error(`Max ${MAX_FILES} resumes allowed`);
     }
 
     if (accepted.length === 0) return;
@@ -89,8 +109,14 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
   }, []);
 
   const removeFile = (index: number) => {
+    const entry = entriesRef.current[index];
+    if (!entry || !entry.key) {
+      return;
+    }
     entriesRef.current = entriesRef.current.filter((_, i) => i !== index);
     setEntries(entriesRef.current);
+
+    setDeletedFileIds((prev) => [...prev, entry.key as string]);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -99,75 +125,125 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
     addFiles(e.dataTransfer.files);
   };
 
+  const handleSubmit = async () => {
+    const uploaded = entriesRef.current.filter((e) => e.status === "uploaded");
+
+    if (uploaded.length === 0 && deletedFileIds.length === 0) {
+      onDone?.();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.post("/upload/confirm", {
+        files: uploaded.map((e) => ({
+          filename: e.file.name,
+          file_id: e.file_id,
+          key: e.key,
+        })),
+        deleted_file_keys: deletedFileIds,
+      });
+
+      toast.success("Resumes saved");
+      setDeletedFileIds([]);
+      onDone?.();
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to save resumes"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const atLimit = entries.length >= MAX_FILES;
+  const hasUploading = entries.some((e) => e.status === "uploading");
+  const hasSubmittable =
+    entries.some((e) => e.status === "uploaded") || deletedFileIds.length > 0;
+
   return (
     <div className="flex flex-col gap-4">
-      <motion.div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-        animate={{
-          borderColor: isDragging
-            ? "hsl(var(--primary))"
-            : "hsl(var(--border))",
-          backgroundColor: isDragging ? "hsl(var(--accent))" : "transparent",
-        }}
-        className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-10 cursor-pointer"
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          multiple
-          hidden
-          onChange={(e) => addFiles(e.target.files)}
-        />
-        <div className="rounded-full border p-3">
-          <Upload className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <p className="font-medium">Drag & drop files here</p>
-        <p className="text-sm text-muted-foreground">
-          Or click to browse (max {MAX_FILES} files)
-        </p>
-      </motion.div>
+      {!atLimit && (
+        <motion.div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          animate={{
+            borderColor: isDragging
+              ? "hsl(var(--primary))"
+              : "hsl(var(--border))",
+            backgroundColor: isDragging ? "hsl(var(--accent))" : "transparent",
+          }}
+          className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-10 cursor-pointer"
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf"
+            multiple
+            hidden
+            onChange={(e) => addFiles(e.target.files)}
+          />
+          <div className="rounded-full border p-3">
+            <Upload className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="font-medium">Drag & drop files here</p>
+          <p className="text-sm text-muted-foreground">
+            Or click to browse (max {MAX_FILES} files)
+          </p>
+        </motion.div>
+      )}
 
-      <AnimatePresence>
-        {entries.map((entry, index) => (
-          <motion.div
-            key={entry.file.name + index}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="flex items-center justify-between rounded-lg border p-3"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{entry.file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatSize(entry.file.size)}
-                </p>
-              </div>
+      {atLimit && (
+        <p className="text-sm text-muted-foreground text-center py-2">
+          Maximum of {MAX_FILES} resumes reached. Remove one to add another.
+        </p>
+      )}
+
+      {entries.map((entry, index) => (
+        <motion.div
+          key={entry.file.name + index}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between rounded-lg border p-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted">
+              <FileText className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="flex items-center gap-2">
-              {entry.status === "uploading" && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-              {entry.status === "done" && (
-                <Check className="h-4 w-4 text-green-500" />
-              )}
+            <div>
+              <p className="text-sm font-medium">{entry.file.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatSize(entry.file.size)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {entry.status === "uploading" && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            {entry.status === "uploaded" && (
+              <Check className="h-4 w-4 text-green-500" />
+            )}
+            {entry.status !== "uploading" && (
               <button onClick={() => removeFile(index)}>
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
+      ))}
+
+      <button
+        onClick={handleSubmit}
+        disabled={hasUploading || isSubmitting || !hasSubmittable}
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground py-2.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+        Submit
+      </button>
     </div>
   );
 }
