@@ -2,8 +2,9 @@
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "motion/react";
-import { Plus, Trash2, Save, ListPlus } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Save, ListPlus, Loader2 } from "lucide-react";
+import AutoFillSkeleton from "@/loaders/autofill.loader";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { JellyButton } from "@/components/godui/jelly-button";
+import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 
 const items = [{ label: "AutoFills" }];
 
@@ -29,6 +31,8 @@ type FormValues = {
 
 export default function AutoFill() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const { isLoading, data } = useGetAutoFill();
+  const { mutate, isPending } = useSaveAutoFill();
   const { register, control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: {
       name: "",
@@ -42,6 +46,47 @@ export default function AutoFill() {
     control,
     name: "rules",
   });
+
+  useEffect(() => {
+    if (!data || !data?.data) return;
+
+    const { name, email, phone, _id, created_on, updated_on, ...rest } =
+      data.data;
+
+    const rules = Object.entries(rest).map(([label, answer]) => ({
+      label,
+      answer: answer as string,
+    }));
+
+    reset({
+      name: name ?? "",
+      email: email ?? "",
+      phone: phone ?? "",
+      rules: rules.length > 0 ? rules : [{ label: "", answer: "" }],
+    });
+  }, [data, reset]);
+
+  if (isLoading) {
+    return <AutoFillSkeleton />;
+  }
+
+  const onSubmit = (data: FormValues) => {
+    const rulesObject = Object.fromEntries(
+      data.rules
+        .filter((r) => r.label.trim() !== "")
+        .map((r) => [r.label.trim(), r.answer]),
+    );
+
+    const payload = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      ...rulesObject,
+    };
+
+    mutate(payload);
+  };
+
   function CloseDialog() {
     setResetDialogOpen(false);
   }
@@ -60,10 +105,6 @@ export default function AutoFill() {
   const confirmResetForm = () => {
     reset();
     setResetDialogOpen(false);
-  };
-
-  const onSubmit = (data: FormValues) => {
-    console.log(data);
   };
 
   return (
@@ -196,20 +237,18 @@ export default function AutoFill() {
         </div>
 
         <div className="sticky bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur py-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={OpenDialog}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted transition"
-          >
+          <JellyButton type="button" onClick={OpenDialog} variant="secondary">
             Reset
-          </button>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition"
-          >
-            <Save className="w-4 h-4" />
-            Save Changes
-          </button>
+          </JellyButton>
+
+          <JellyButton type="submit" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 me-2" />
+            )}
+            {isPending ? "Saving..." : "Save Changes"}
+          </JellyButton>
         </div>
       </form>
 
