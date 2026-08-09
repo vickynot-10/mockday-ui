@@ -2,6 +2,7 @@
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { JellyButton } from "@/components/godui/jelly-button";
 import { Download, Loader2, Star, Trash2, Plus } from "lucide-react";
+import ResumeCardSkeleton from "@/loaders/resume.loader";
 import {
   Dialog,
   DialogContent,
@@ -160,11 +161,10 @@ export default function Resumes() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-        {isLoading && (
-          <p className="text-sm text-muted-foreground col-span-full">
-            Loading...
-          </p>
-        )}
+        {isLoading &&
+          [1, 2, 3, 4, 5, 6].map((n) => {
+            return <ResumeCardSkeleton key={n} />;
+          })}
 
         {!isLoading && resumes.length === 0 && (
           <p className="text-sm text-muted-foreground col-span-full">
