@@ -1,7 +1,7 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { JellyButton } from "@/components/godui/jelly-button";
-import { Plus, Download, Eye, Loader2, Star, Trash2 } from "lucide-react";
+import { Download, Loader2, Star, Trash2, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +52,11 @@ export default function Resumes() {
     isPending: marking,
     variables: markingId,
   } = useMarkAsDefault();
-  const { mutate: deleteResumes, isPending: deleting } = useDeleteResumes();
+  const {
+    mutate: deleteResumes,
+    isPending: deleting,
+    variables: deletingIds,
+  } = useDeleteResumes();
 
   const resumes = data?.data ?? [];
 
@@ -97,12 +101,25 @@ export default function Resumes() {
     return isPending && variables?.id === id && variables?.mode === mode;
   }
 
+  function isCardDeleting(id: string) {
+    return deleting && deletingIds?.includes(id);
+  }
+
   return (
     <>
       <BreadCrumbs items={items} />
 
       <div className="flex flex-row items-center justify-between mt-4">
         <div className="flex flex-row items-center gap-3">
+          {resumes.length > 0 && (
+            <Checkbox
+              checked={selectedIds.length === resumes.length}
+              onCheckedChange={(checked) =>
+                setSelectedIds(checked ? resumes.map((r: any) => r._id) : [])
+              }
+            />
+          )}
+
           <span className="text-sm text-muted-foreground">
             {resumes.length} / {MAX_RESUMES} resumes
           </span>
@@ -168,7 +185,10 @@ export default function Resumes() {
             >
               <Card className="h-full overflow-hidden">
                 <CardContent className="px-0">
-                  <div className="relative  h-52 bg-muted border-b overflow-hidden">
+                  <button
+                    onClick={() => handleView(resume.preview_url)}
+                    className="relative w-full h-52 bg-muted border-b overflow-hidden block"
+                  >
                     <iframe
                       src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                       className="absolute top-0 left-0 pointer-events-none"
@@ -181,39 +201,49 @@ export default function Resumes() {
                       title={resume.filename}
                     />
 
-                    <div className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5">
+                    <div
+                      className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Checkbox
                         checked={selectedIds.includes(resume._id)}
                         onCheckedChange={() => toggleSelect(resume._id)}
                       />
                     </div>
-
-                    {resume.default && (
-                      <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-medium bg-yellow-400/90 text-yellow-950 px-1.5 py-0.5 rounded-full">
-                        <Star className="w-2.5 h-2.5 fill-yellow-950" />
-                        Default
-                      </span>
-                    )}
-                  </div>
+                  </button>
                 </CardContent>
-                <CardHeader>
-                  <CardTitle> {resume.filename ?? "Resume"}</CardTitle>
-                  <CardDescription>
-                    {" "}
-                    Uploaded on {formatDate(resume.created_at)}.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3 p-4">
-                  <CardFooter className="gap-3 max-sm:flex-col max-sm:items-stretch">
-                    <JellyButton
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
-                      onClick={() => handleView(resume.preview_url)}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </JellyButton>
 
+                <CardHeader className="flex flex-row items-start justify-between gap-2">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <CardTitle className="truncate">
+                      {resume.filename ?? "Resume"}
+                    </CardTitle>
+                    <CardDescription>
+                      Uploaded on {formatDate(resume.created_at)}.
+                    </CardDescription>
+                  </div>
+
+                  <button
+                    onClick={() => markAsDefault(resume._id)}
+                    disabled={marking || resume.default}
+                    className="shrink-0 disabled:cursor-default"
+                  >
+                    {marking && markingId === resume._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Star
+                        className={`w-4 h-4 ${
+                          resume.default
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      />
+                    )}
+                  </button>
+                </CardHeader>
+
+                <CardContent className="flex flex-col gap-3 p-4 pt-0">
+                  <CardFooter className="gap-3 p-0 max-sm:flex-col max-sm:items-stretch">
                     <JellyButton
                       variant="primary"
                       size="sm"
@@ -228,35 +258,22 @@ export default function Resumes() {
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
+                      Download
                     </JellyButton>
 
-                    {!resume.default && (
-                      <JellyButton
-                        variant="primary"
-                        size="sm"
-                        className="flex-1 flex flex-row items-center justify-center gap-1.5"
-                        onClick={() => markAsDefault(resume._id)}
-                        disabled={marking || resume.default}
-                      >
-                        {marking && markingId === resume._id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Star className="w-3.5 h-3.5" />
-                        )}
-                      </JellyButton>
-                    )}
-
                     <JellyButton
-                      variant="primary"
+                      variant="outline"
                       size="sm"
                       className="flex-1 flex flex-row items-center justify-center gap-1.5"
                       onClick={() => setDeleteTargetIds([resume._id])}
+                      disabled={isCardDeleting(resume._id)}
                     >
-                      {marking && markingId === resume._id ? (
+                      {isCardDeleting(resume._id) ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <Trash2 className="w-3.5 h-3.5" />
                       )}
+                      Delete
                     </JellyButton>
                   </CardFooter>
                 </CardContent>
