@@ -1,5 +1,5 @@
 import { api } from "@/utils/axios";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const QUERY_KEY = "resumes";
 
@@ -17,9 +17,32 @@ export const useGetResumes = () => {
 
 export function useDownloadURL() {
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.post("/resumes/download", { id });
+    mutationFn: async ({
+      id,
+      mode,
+    }: {
+      id: string;
+      mode: "view" | "download";
+    }) => {
+      const res = await api.post("/resumes/download", { id, mode });
       return res.data;
+    },
+  });
+}
+
+export function useMarkAsDefault() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await api.patch("/resumes/default", { id });
+      return res.data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEY],
+      });
     },
   });
 }
