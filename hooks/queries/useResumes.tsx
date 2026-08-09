@@ -42,3 +42,16 @@ export function useMarkAsDefault() {
     },
   });
 }
+
+export function useDeleteResumes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await api.post("/resumes/delete", { ids });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+  });
+}

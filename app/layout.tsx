@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+
 import { Geist, Geist_Mono, Noto_Sans_Georgian } from "next/font/google";
 import "./globals.css";
 import RootWrapper from "@/wrappers/MainWrapper";
@@ -18,10 +18,6 @@ const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-serif",
 });
 
-export const metadata: Metadata = {
-  title: "Order Management",
-  description: "Manage and track your orders efficiently.",
-};
 
 export default function RootLayout({
   children,

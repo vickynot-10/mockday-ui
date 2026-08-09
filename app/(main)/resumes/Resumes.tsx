@@ -1,20 +1,33 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { JellyButton } from "@/components/godui/jelly-button";
-import { Plus, Download, Eye, Loader2, Star } from "lucide-react";
+import { Plus, Download, Eye, Loader2, Star, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import PdfUploader from "./components/PdfUploader";
 import { useState } from "react";
-import { useGetResumes, useDownloadURL, useMarkAsDefault } from "@/hooks/queries/useResumes";
+import {
+  useGetResumes,
+  useDownloadURL,
+  useMarkAsDefault,
+  useDeleteResumes,
+} from "@/hooks/queries/useResumes";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { MAX_RESUMES } from "@/constants";
 
 const items = [{ label: "Resumes" }];
@@ -29,21 +42,25 @@ function formatDate(date: string | Date) {
 
 export default function Resumes() {
   const [open, setOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+
   const { data, isLoading } = useGetResumes();
   const { mutate, isPending, variables } = useDownloadURL();
-  const { mutate: markAsDefault, isPending: marking, variables: markingId } = useMarkAsDefault();
+  const {
+    mutate: markAsDefault,
+    isPending: marking,
+    variables: markingId,
+  } = useMarkAsDefault();
+  const { mutate: deleteResumes, isPending: deleting } = useDeleteResumes();
 
   const resumes = data?.data ?? [];
 
-  function handleAction(id: string, filename: string, mode: "view" | "download") {
+  function handleDownload(id: string, filename: string) {
     mutate(
-      { id, mode },
+      { id, mode: "download" },
       {
         onSuccess: (res) => {
-          if (mode === "view") {
-            window.open(res.data.download_url, "_blank");
-            return;
-          }
           const a = document.createElement("a");
           a.href = res.data.download_url;
           a.download = filename ?? "resume.pdf";
@@ -55,6 +72,27 @@ export default function Resumes() {
     );
   }
 
+  function handleView(previewUrl: string) {
+    window.open(previewUrl, "_blank");
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function confirmDelete() {
+    deleteResumes(deleteTargetIds, {
+      onSuccess: () => {
+        setSelectedIds((prev) =>
+          prev.filter((id) => !deleteTargetIds.includes(id)),
+        );
+        setDeleteTargetIds([]);
+      },
+    });
+  }
+
   function isLoadingAction(id: string, mode: "view" | "download") {
     return isPending && variables?.id === id && variables?.mode === mode;
   }
@@ -64,9 +102,23 @@ export default function Resumes() {
       <BreadCrumbs items={items} />
 
       <div className="flex flex-row items-center justify-between mt-4">
-        <span className="text-sm text-muted-foreground">
-          {resumes.length} / {MAX_RESUMES} resumes
-        </span>
+        <div className="flex flex-row items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            {resumes.length} / {MAX_RESUMES} resumes
+          </span>
+
+          {selectedIds.length > 0 && (
+            <JellyButton
+              variant="destructive"
+              size="sm"
+              className="flex flex-row items-center gap-2"
+              onClick={() => setDeleteTargetIds(selectedIds)}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete {selectedIds.length} selected
+            </JellyButton>
+          )}
+        </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
@@ -90,7 +142,7 @@ export default function Resumes() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {isLoading && (
           <p className="text-sm text-muted-foreground col-span-full">
             Loading...
@@ -112,94 +164,150 @@ export default function Resumes() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.25, delay: i * 0.05 }}
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -3 }}
             >
-              <Card className="h-full">
-                <CardContent className="flex flex-col gap-2.5 p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
-                      <Image
-                        src="/pdf_icon.png"
-                        alt="PDF"
-                        width={16}
-                        height={16}
+              <Card className="h-full overflow-hidden">
+                <CardContent className="px-0">
+                  <div className="relative  h-52 bg-muted border-b overflow-hidden">
+                    <iframe
+                      src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                      className="absolute top-0 left-0 pointer-events-none"
+                      style={{
+                        width: "200%",
+                        height: "200%",
+                        transform: "scale(0.5)",
+                        transformOrigin: "top left",
+                      }}
+                      title={resume.filename}
+                    />
+
+                    <div className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5">
+                      <Checkbox
+                        checked={selectedIds.includes(resume._id)}
+                        onCheckedChange={() => toggleSelect(resume._id)}
                       />
                     </div>
 
-                    <div className="flex flex-row items-center gap-1.5">
-                      <JellyButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleAction(resume._id, resume.filename, "view")
-                        }
-                        disabled={isPending}
-                      >
-                        {isLoadingAction(resume._id, "view") ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Eye className="w-3.5 h-3.5" />
-                        )}
-                      </JellyButton>
-
-                      <JellyButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          handleAction(resume._id, resume.filename, "download")
-                        }
-                        disabled={isPending}
-                      >
-                        {isLoadingAction(resume._id, "download") ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Download className="w-3.5 h-3.5" />
-                        )}
-                      </JellyButton>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium truncate">
-                      {resume.filename ?? "Resume"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Uploaded on {formatDate(resume.created_at)}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => markAsDefault(resume._id)}
-                    disabled={marking || resume.default}
-                    className="flex flex-row items-center gap-1 text-xs disabled:cursor-default"
-                  >
-                    {marking && markingId === resume._id ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Star
-                        className={`w-3 h-3 ${
-                          resume.default
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-muted-foreground"
-                        }`}
-                      />
+                    {resume.default && (
+                      <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-medium bg-yellow-400/90 text-yellow-950 px-1.5 py-0.5 rounded-full">
+                        <Star className="w-2.5 h-2.5 fill-yellow-950" />
+                        Default
+                      </span>
                     )}
-                    <span
-                      className={
-                        resume.default
-                          ? "text-yellow-500"
-                          : "text-muted-foreground hover:text-foreground"
-                      }
+                  </div>
+                </CardContent>
+                <CardHeader>
+                  <CardTitle> {resume.filename ?? "Resume"}</CardTitle>
+                  <CardDescription>
+                    {" "}
+                    Uploaded on {formatDate(resume.created_at)}.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 p-4">
+                  <CardFooter className="gap-3 max-sm:flex-col max-sm:items-stretch">
+                    <JellyButton
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                      onClick={() => handleView(resume.preview_url)}
                     >
-                      {resume.default ? "Default" : "Mark as default"}
-                    </span>
-                  </button>
+                      <Eye className="w-3.5 h-3.5" />
+                    </JellyButton>
+
+                    <JellyButton
+                      variant="primary"
+                      size="sm"
+                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                      onClick={() =>
+                        handleDownload(resume._id, resume.filename)
+                      }
+                      disabled={isPending}
+                    >
+                      {isLoadingAction(resume._id, "download") ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                    </JellyButton>
+
+                    {!resume.default && (
+                      <JellyButton
+                        variant="primary"
+                        size="sm"
+                        className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                        onClick={() => markAsDefault(resume._id)}
+                        disabled={marking || resume.default}
+                      >
+                        {marking && markingId === resume._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Star className="w-3.5 h-3.5" />
+                        )}
+                      </JellyButton>
+                    )}
+
+                    <JellyButton
+                      variant="primary"
+                      size="sm"
+                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                      onClick={() => setDeleteTargetIds([resume._id])}
+                    >
+                      {marking && markingId === resume._id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </JellyButton>
+                  </CardFooter>
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      <Dialog
+        open={deleteTargetIds.length > 0}
+        onOpenChange={(v) => !v && setDeleteTargetIds([])}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Delete{" "}
+              {deleteTargetIds.length > 1
+                ? `${deleteTargetIds.length} resumes`
+                : "resume"}
+              ?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This can't be undone. The selected file
+            {deleteTargetIds.length > 1 ? "s" : ""} will be permanently removed.
+          </p>
+          <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
+            <JellyButton
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteTargetIds([])}
+              disabled={deleting}
+            >
+              Cancel
+            </JellyButton>
+            <JellyButton
+              variant="destructive"
+              size="sm"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                "Delete"
+              )}
+            </JellyButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

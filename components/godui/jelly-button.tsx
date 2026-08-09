@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-export type JellyButtonVariant = "primary" | "secondary" | "outline";
+export type JellyButtonVariant = "primary" | "secondary" | "outline" | "destructive";
 export type JellyButtonSize = "sm" | "md" | "lg";
 
 export type JellyButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -29,6 +29,7 @@ const variantClasses: Record<JellyButtonVariant, string> = {
   secondary: "bg-secondary text-secondary-foreground shadow-sm",
   outline:
     "border border-border bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground",
+destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
 };
 
 const sizeClasses: Record<JellyButtonSize, string> = {
