@@ -17,7 +17,7 @@ export function useLogin() {
       if (data.success) {
         toast.success(data.msg ?? "Logged in successfully");
         queryClient.invalidateQueries({ queryKey: ["me"] });
-        router.push("/products");
+        router.push("/");
       }
     },
   });
@@ -36,7 +36,7 @@ export function useLogout() {
       if (data.success) {
         toast.success(data.msg ?? "Logged out successfully");
         queryClient.invalidateQueries({ queryKey: ["me"] });
-        router.push("/products");
+        router.push("/");
       }
     },
   });
@@ -55,7 +55,7 @@ export function useSignUp() {
       if (data.success) {
         toast.success(data.msg ?? "Signup successfully");
         queryClient.invalidateQueries({ queryKey: ["me"] });
-        router.push("/products");
+        router.push("/");
       }
     },
   });
