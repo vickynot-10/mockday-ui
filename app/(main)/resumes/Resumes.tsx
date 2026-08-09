@@ -23,14 +23,8 @@ export default function Resumes() {
 
       <div className="flex flex-row items-center justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <JellyButton
-              variant="primary"
-              size="sm"
-              className="flex flex-row items-center gap-2"
-            >
-              <Plus /> Upload Resumes
-            </JellyButton>
+          <DialogTrigger render={<JellyButton variant="primary" size="sm" className="flex flex-row items-center gap-2" />}>
+            <Plus /> Upload Resumes
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
