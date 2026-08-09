@@ -32,17 +32,13 @@ export function useDownloadURL() {
 
 export function useMarkAsDefault() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const res = await api.patch("/resumes/default", { id });
+    mutationFn: async (id: string) => {
+      const res = await api.patch("/resumes", { id });
       return res.data;
     },
-
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEY],
-      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
   });
 }

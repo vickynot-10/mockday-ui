@@ -1,7 +1,7 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { JellyButton } from "@/components/godui/jelly-button";
-import { Plus, Download, Eye, Loader2 } from "lucide-react";
+import { Plus, Download, Eye, Loader2, Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ export default function Resumes() {
   const [open, setOpen] = useState(false);
   const { data, isLoading } = useGetResumes();
   const { mutate, isPending, variables } = useDownloadURL();
-  const { mutate : markAsDefault , isPending : marking } =useMarkAsDefault()
+  const { mutate: markAsDefault, isPending: marking, variables: markingId } = useMarkAsDefault();
 
   const resumes = data?.data ?? [];
 
@@ -90,7 +90,7 @@ export default function Resumes() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-4">
         {isLoading && (
           <p className="text-sm text-muted-foreground col-span-full">
             Loading...
@@ -115,18 +115,18 @@ export default function Resumes() {
               whileHover={{ y: -2 }}
             >
               <Card className="h-full">
-                <CardContent className="flex flex-col gap-4 p-4">
+                <CardContent className="flex flex-col gap-2.5 p-3">
                   <div className="flex items-start justify-between">
-                    <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center">
                       <Image
                         src="/pdf_icon.png"
                         alt="PDF"
-                        width={20}
-                        height={20}
+                        width={16}
+                        height={16}
                       />
                     </div>
 
-                    <div className="flex flex-row items-center gap-2">
+                    <div className="flex flex-row items-center gap-1.5">
                       <JellyButton
                         variant="outline"
                         size="sm"
@@ -136,9 +136,9 @@ export default function Resumes() {
                         disabled={isPending}
                       >
                         {isLoadingAction(resume._id, "view") ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         )}
                       </JellyButton>
 
@@ -151,9 +151,9 @@ export default function Resumes() {
                         disabled={isPending}
                       >
                         {isLoadingAction(resume._id, "download") ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Download className="w-4 h-4" />
+                          <Download className="w-3.5 h-3.5" />
                         )}
                       </JellyButton>
                     </div>
@@ -167,6 +167,33 @@ export default function Resumes() {
                       Uploaded on {formatDate(resume.created_at)}
                     </span>
                   </div>
+
+                  <button
+                    onClick={() => markAsDefault(resume._id)}
+                    disabled={marking || resume.default}
+                    className="flex flex-row items-center gap-1 text-xs disabled:cursor-default"
+                  >
+                    {marking && markingId === resume._id ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Star
+                        className={`w-3 h-3 ${
+                          resume.default
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    )}
+                    <span
+                      className={
+                        resume.default
+                          ? "text-yellow-500"
+                          : "text-muted-foreground hover:text-foreground"
+                      }
+                    >
+                      {resume.default ? "Default" : "Mark as default"}
+                    </span>
+                  </button>
                 </CardContent>
               </Card>
             </motion.div>
