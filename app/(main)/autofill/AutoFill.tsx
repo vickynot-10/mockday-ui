@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "motion/react";
 import { Plus, Trash2, Save, ListPlus, Loader2 } from "lucide-react";
 import AutoFillSkeleton from "@/loaders/autofill.loader";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -42,14 +42,15 @@ export default function AutoFill() {
     },
   });
 
+  const hasHydrated = useRef(false);
   const { fields, append, remove } = useFieldArray({
     control,
     name: "rules",
   });
 
   useEffect(() => {
-    if (!data || !data?.data) return;
-
+    if (!data || !data?.data || hasHydrated.current) return;
+    hasHydrated.current = true;
     const { name, email, phone, _id, created_on, updated_on, ...rest } =
       data.data;
 
