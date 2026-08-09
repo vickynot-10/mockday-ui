@@ -29,6 +29,17 @@ type FormValues = {
   rules: FieldRule[];
 };
 
+function formatUpdatedOn(dateStr?: string) {
+  if (!dateStr) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateStr));
+}
+
 export default function AutoFill() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const { isLoading, data } = useGetAutoFill();
@@ -108,9 +119,18 @@ export default function AutoFill() {
     setResetDialogOpen(false);
   };
 
+  const lastUpdated = formatUpdatedOn(data?.data?.updated_on);
+
   return (
     <>
-      <BreadCrumbs items={items} />
+      <div className="flex items-center justify-between mb-3">
+        <BreadCrumbs items={items} />
+        {lastUpdated && (
+          <p className="text-sm text-muted-foreground">
+            Last updated: {lastUpdated}
+          </p>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
         <div className="space-y-8 pb-24">
