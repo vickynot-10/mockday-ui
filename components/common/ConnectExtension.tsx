@@ -22,6 +22,32 @@ export default function ConnectExtensionButton() {
   const [status, setStatus] = useState<ConnectionStatus>("checking");
   const { mutate, isPending } = useGetExtension();
 
+  function handleDisconnect() {
+    window.chrome.runtime.sendMessage(
+      EXTENSION_ID,
+      {
+        type: "DISCONNECT",
+      },
+      (response: any) => {
+        const error = window.chrome.runtime.lastError;
+
+        if (error) {
+          console.error("DISCONNECT error:", error.message);
+          toast.error("Couldn't disconnect extension");
+          return;
+        }
+
+        if (!response?.ok) {
+          toast.error("Couldn't disconnect extension");
+          return;
+        }
+
+        setStatus("not_connected");
+        toast.success("Extension disconnected");
+      },
+    );
+  }
+
   function refreshStatus() {
     setStatus("checking");
 
@@ -125,15 +151,16 @@ export default function ConnectExtensionButton() {
         )}
 
         {status === "connected" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-emerald-600"
-            disabled
-          >
-            <Check className="mr-2 h-4 w-4" />
-            Extension Connected
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center text-sm text-emerald-600">
+              <Check className="mr-2 h-4 w-4" />
+              Extension Connected
+            </span>
+
+            <Button variant="outline" size="sm" onClick={handleDisconnect}>
+              Disconnect
+            </Button>
+          </div>
         )}
 
         {status === "not_connected" && (
