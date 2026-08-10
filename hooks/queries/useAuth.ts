@@ -56,6 +56,15 @@ export function useSignout() {
   });
 }
 
+export function useGetExtension() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post("/extensions");
+      return res.data;
+    },
+  });
+}
+
 export async function SignOut() {
   const res = await api.post("/sign-out");
   return res.data;
