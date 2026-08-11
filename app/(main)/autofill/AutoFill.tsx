@@ -58,7 +58,6 @@ export default function AutoFill() {
     name: "rules",
   });
 
-
   useEffect(() => {
     if (!data || !data?.data || hasHydrated.current) return;
     hasHydrated.current = true;
@@ -139,18 +138,18 @@ export default function AutoFill() {
     });
   }, [append]);
 
- const RemoveItem = useCallback(
-  (index: number) => {
-    remove(index);
-    requestAnimationFrame(() => {
-      const nextInput = document.querySelector<HTMLInputElement>(
-        `input[name="rules.${index}.label"]`,
-      );
-      nextInput?.focus();
-    });
-  },
-  [remove],
-);
+  const RemoveItem = useCallback(
+    (index: number) => {
+      remove(index);
+      requestAnimationFrame(() => {
+        const nextInput = document.querySelector<HTMLInputElement>(
+          `input[name="rules.${index}.label"]`,
+        );
+        nextInput?.focus();
+      });
+    },
+    [remove],
+  );
 
   const confirmResetForm = () => {
     reset();
@@ -196,8 +195,8 @@ export default function AutoFill() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-xl border  border-border bg-card p-6">
+            <div className="flex items-center justify-between mb-1">
               <h2 className="text-lg font-semibold">Field Rules</h2>
               <button
                 type="button"
@@ -208,6 +207,10 @@ export default function AutoFill() {
                 Add Rule
               </button>
             </div>
+
+            <p className="text-xs text-muted-foreground mb-4">
+              Use Ctrl + Enter to add an extra row and Ctrl + Shift + Backspace to delete the current row. Don't add passwords or any other sensitive details here.
+            </p>
 
             <div className="space-y-3">
               {fields.length <= 0 && (
@@ -249,7 +252,6 @@ export default function AutoFill() {
                         {...register(`rules.${index}.label` as const)}
                         className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                         placeholder="e.g. LinkedIn"
-          
                       />
                     </div>
 
