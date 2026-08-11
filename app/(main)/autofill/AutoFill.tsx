@@ -4,7 +4,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "motion/react";
 import { Plus, Trash2, Save, ListPlus, Loader2 } from "lucide-react";
 import AutoFillSkeleton from "@/loaders/autofill.loader";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,6 @@ type FieldRule = {
 };
 
 type FormValues = {
-  name: string;
   email: string;
   phone: string;
   rules: FieldRule[];
@@ -46,7 +46,6 @@ export default function AutoFill() {
   const { mutate, isPending } = useSaveAutoFill();
   const { register, control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: {
-      name: "",
       email: "",
       phone: "",
       rules: [{ label: "", answer: "" }],
@@ -59,11 +58,11 @@ export default function AutoFill() {
     name: "rules",
   });
 
+
   useEffect(() => {
     if (!data || !data?.data || hasHydrated.current) return;
     hasHydrated.current = true;
-    const { name, email, phone, _id, created_on, updated_on, ...rest } =
-      data.data;
+    const { email, phone, _id, created_on, updated_on, ...rest } = data.data;
 
     const rules = Object.entries(rest).map(([label, answer]) => ({
       label,
@@ -71,12 +70,40 @@ export default function AutoFill() {
     }));
 
     reset({
-      name: name ?? "",
       email: email ?? "",
       phone: phone ?? "",
       rules: rules.length > 0 ? rules : [{ label: "", answer: "" }],
     });
   }, [data, reset]);
+
+  useHotkeys(
+    "ctrl+enter",
+    (event) => {
+      event.preventDefault();
+      AddItem();
+    },
+    {
+      enableOnFormTags: ["INPUT"],
+      preventDefault: true,
+    },
+  );
+
+  useHotkeys(
+    "ctrl+shift+backspace",
+    (event) => {
+      event.preventDefault();
+      const target = event.target as HTMLInputElement;
+      const match = target.name?.match(/^rules\.(\d+)\./);
+      if (!match) return;
+      const index = Number(match[1]);
+      if (fields.length <= 1) return;
+      RemoveItem(index);
+    },
+    {
+      enableOnFormTags: ["INPUT"],
+      preventDefault: true,
+    },
+  );
 
   if (isLoading) {
     return <AutoFillSkeleton />;
@@ -90,7 +117,6 @@ export default function AutoFill() {
     );
 
     const payload = {
-      name: data.name,
       email: data.email,
       phone: data.phone,
       ...rulesObject,
@@ -106,13 +132,25 @@ export default function AutoFill() {
   function OpenDialog() {
     setResetDialogOpen(true);
   }
-  function AddItem() {
-    append({ label: "", answer: "" });
-  }
+  const AddItem = useCallback(() => {
+    append({
+      label: "",
+      answer: "",
+    });
+  }, [append]);
 
-  function RemoveItem(index: number) {
+ const RemoveItem = useCallback(
+  (index: number) => {
     remove(index);
-  }
+    requestAnimationFrame(() => {
+      const nextInput = document.querySelector<HTMLInputElement>(
+        `input[name="rules.${index}.label"]`,
+      );
+      nextInput?.focus();
+    });
+  },
+  [remove],
+);
 
   const confirmResetForm = () => {
     reset();
@@ -137,16 +175,7 @@ export default function AutoFill() {
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">Default Fields</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm text-muted-foreground">Name</label>
-                <input
-                  {...register("name")}
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="John Doe"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm text-muted-foreground">Email</label>
                 <input
@@ -220,6 +249,7 @@ export default function AutoFill() {
                         {...register(`rules.${index}.label` as const)}
                         className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                         placeholder="e.g. LinkedIn"
+          
                       />
                     </div>
 
