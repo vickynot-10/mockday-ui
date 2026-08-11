@@ -44,7 +44,15 @@ export default function AutoFill() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const { isLoading, data } = useGetAutoFill();
   const { mutate, isPending } = useSaveAutoFill();
-  const { register, control, handleSubmit, reset } = useForm<FormValues>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    getValues,
+    trigger,
+    formState: { errors },
+  } = useForm<FormValues>({
     defaultValues: {
       email: "",
       phone: "",
@@ -104,33 +112,7 @@ export default function AutoFill() {
     },
   );
 
-  if (isLoading) {
-    return <AutoFillSkeleton />;
-  }
-
-  const onSubmit = (data: FormValues) => {
-    const rulesObject = Object.fromEntries(
-      data.rules
-        .filter((r) => r.label.trim() !== "")
-        .map((r) => [r.label.trim(), r.answer]),
-    );
-
-    const payload = {
-      email: data.email,
-      phone: data.phone,
-      ...rulesObject,
-    };
-
-    mutate(payload);
-  };
-
-  function CloseDialog() {
-    setResetDialogOpen(false);
-  }
-
-  function OpenDialog() {
-    setResetDialogOpen(true);
-  }
+  
   const AddItem = useCallback(() => {
     append({
       label: "",
@@ -150,6 +132,35 @@ export default function AutoFill() {
     },
     [remove],
   );
+
+  if (isLoading) {
+    return <AutoFillSkeleton />;
+  }
+
+  const onSubmit = (data: FormValues) => {
+    const rulesObject = Object.fromEntries(
+      data.rules
+        .map((r) => ({ label: r.label.trim(), answer: r.answer.trim() }))
+        .filter((r) => r.label !== "" || r.answer !== "")
+        .map((r) => [r.label, r.answer]),
+    );
+
+    const payload = {
+      email: data.email.trim(),
+      phone: data.phone.trim(),
+      ...rulesObject,
+    };
+
+    mutate(payload);
+  };
+
+  function CloseDialog() {
+    setResetDialogOpen(false);
+  }
+
+  function OpenDialog() {
+    setResetDialogOpen(true);
+  }
 
   const confirmResetForm = () => {
     reset();
@@ -236,55 +247,104 @@ export default function AutoFill() {
               )}
 
               {fields.length > 0 &&
-                fields.map((field, index) => (
-                  <motion.div
-                    key={field.id}
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end"
-                  >
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm text-muted-foreground">
-                        Label contains
-                      </label>
-                      <input
-                        {...register(`rules.${index}.label` as const)}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="e.g. LinkedIn"
-                      />
-                    </div>
+                fields.map((field, index) => {
+                  const labelError = errors.rules?.[index]?.label;
+                  const answerError = errors.rules?.[index]?.answer;
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-sm text-muted-foreground">
-                        Answer
-                      </label>
-                      <input
-                        {...register(`rules.${index}.answer` as const)}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        placeholder="e.g. linkedin.com/in/you"
-                      />
-                    </div>
+                  return (
+                    <motion.div
+                      key={field.id}
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-start"
+                    >
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm text-muted-foreground">
+                          Label contains
+                        </label>
+                        <input
+                          {...register(`rules.${index}.label` as const, {
+                            validate: (value) => {
+                              const answer = getValues(
+                                `rules.${index}.answer`,
+                              );
+                              if (!value?.trim() && answer?.trim()) {
+                                return "This field is required";
+                              }
+                              return true;
+                            },
+                            onBlur: () => {
+                              trigger(`rules.${index}.answer`);
+                            },
+                          })}
+                          className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
+                            labelError
+                              ? "border-destructive"
+                              : "border-input"
+                          }`}
+                          placeholder="e.g. LinkedIn"
+                        />
+                        {labelError && (
+                          <p className="text-xs text-destructive">
+                            {labelError.message}
+                          </p>
+                        )}
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-2 sm:flex">
-                      <button
-                        type="button"
-                        onClick={() => RemoveItem(index)}
-                        className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </button>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-sm text-muted-foreground">
+                          Answer
+                        </label>
+                        <input
+                          {...register(`rules.${index}.answer` as const, {
+                            validate: (value) => {
+                              const label = getValues(
+                                `rules.${index}.label`,
+                              );
+                              if (!value?.trim() && label?.trim()) {
+                                return "This field is required";
+                              }
+                              return true;
+                            },
+                            onBlur: () => {
+                              trigger(`rules.${index}.label`);
+                            },
+                          })}
+                          className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
+                            answerError
+                              ? "border-destructive"
+                              : "border-input"
+                          }`}
+                          placeholder="e.g. linkedin.com/in/you"
+                        />
+                        {answerError && (
+                          <p className="text-xs text-destructive">
+                            {answerError.message}
+                          </p>
+                        )}
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={AddItem}
-                        className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="grid grid-cols-2 gap-2 sm:flex mt-[26px]">
+                        <button
+                          type="button"
+                          onClick={() => RemoveItem(index)}
+                          className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={AddItem}
+                          className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
             </div>
           </div>
         </div>
