@@ -49,8 +49,6 @@ export default function AutoFill() {
     control,
     handleSubmit,
     reset,
-    getValues,
-    trigger,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -112,7 +110,6 @@ export default function AutoFill() {
     },
   );
 
-  
   const AddItem = useCallback(() => {
     append({
       label: "",
@@ -266,16 +263,10 @@ export default function AutoFill() {
                         <input
                           {...register(`rules.${index}.label` as const, {
                             validate: (value) => {
-                              const answer = getValues(
-                                `rules.${index}.answer`,
-                              );
-                              if (!value?.trim() && answer?.trim()) {
-                                return "This field is required";
+                              if (!value?.trim()) {
+                                return "Field is required";
                               }
                               return true;
-                            },
-                            onBlur: () => {
-                              trigger(`rules.${index}.answer`);
                             },
                           })}
                           className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
@@ -299,16 +290,10 @@ export default function AutoFill() {
                         <input
                           {...register(`rules.${index}.answer` as const, {
                             validate: (value) => {
-                              const label = getValues(
-                                `rules.${index}.label`,
-                              );
-                              if (!value?.trim() && label?.trim()) {
-                                return "This field is required";
+                              if (!value?.trim()) {
+                                return "Field is required";
                               }
                               return true;
-                            },
-                            onBlur: () => {
-                              trigger(`rules.${index}.label`);
                             },
                           })}
                           className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
