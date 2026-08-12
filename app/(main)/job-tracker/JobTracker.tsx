@@ -9,7 +9,7 @@ import { Plus, Search } from "lucide-react";
 import { JellyButton } from "@/components/godui/jelly-button";
 import Tooltip from "@/components/common/ToolTip";
 const EMPTY_ARRAY: never[] = [];
-const items = [{ label: "Trackers" }];
+const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
 
 const LIMIT_OPTIONS = [25, 50, 75, 100];
 

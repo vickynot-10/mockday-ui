@@ -16,7 +16,7 @@ import {
 import { JellyButton } from "@/components/godui/jelly-button";
 import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 
-const items = [{ label: "AutoFills" }];
+const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
 
 type FieldRule = {
   label: string;
@@ -217,7 +217,9 @@ export default function AutoFill() {
             </div>
 
             <p className="text-xs text-muted-foreground mb-4">
-              Use Ctrl + Enter to add an extra row and Ctrl + Shift + Backspace to delete the current row. Don't add passwords or any other sensitive details here.
+              Use Ctrl + Enter to add an extra row and Ctrl + Shift + Backspace
+              to delete the current row. Don't add passwords or any other
+              sensitive details here.
             </p>
 
             <div className="space-y-3">
@@ -270,9 +272,7 @@ export default function AutoFill() {
                             },
                           })}
                           className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
-                            labelError
-                              ? "border-destructive"
-                              : "border-input"
+                            labelError ? "border-destructive" : "border-input"
                           }`}
                           placeholder="e.g. LinkedIn"
                         />
@@ -297,9 +297,7 @@ export default function AutoFill() {
                             },
                           })}
                           className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${
-                            answerError
-                              ? "border-destructive"
-                              : "border-input"
+                            answerError ? "border-destructive" : "border-input"
                           }`}
                           placeholder="e.g. linkedin.com/in/you"
                         />

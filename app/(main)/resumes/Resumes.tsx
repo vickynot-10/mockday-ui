@@ -31,7 +31,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { MAX_RESUMES } from "@/constants";
 
-const items = [{ label: "Resumes" }];
+const items = [{ label: "Apps", isSection: true }, { label: "Resumes" }];
 
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleDateString("en-US", {
