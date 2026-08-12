@@ -9,13 +9,23 @@ import {
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NavMain, NavItem } from "../common/NavMain";
-import { LayoutDashboard, FileText, Briefcase, Wand2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  Briefcase,
+  Wand2,
+  Tags,
+} from "lucide-react";
 
 export const navData: NavItem[] = [
+  { label: "Apps", isSection: true },
   { title: "Dashboard", icon: LayoutDashboard, href: "/" },
   { title: "Resumes", icon: FileText, href: "/resumes" },
   { title: "Job Tracker", icon: Briefcase, href: "/job-tracker" },
   { title: "Autofill Rules", icon: Wand2, href: "/autofill" },
+
+  { label: "Settings", isSection: true },
+  { title: "Tracker Statuses", icon: Tags, href: "/tracker-status" },
 ];
 
 export default function AppSidebar() {

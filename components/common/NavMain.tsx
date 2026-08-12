@@ -26,7 +26,7 @@ export type NavItem = {
   isSection?: boolean;
   title?: string;
   icon?: LucideIcon;
-  href: string;
+  href?: string;
   children?: NavItem[];
 };
 
@@ -176,7 +176,7 @@ function NavMainItem({
                 "rounded-md text-sm font-medium px-3 py-2 h-9 transition-colors cursor-pointer",
                 isParentActive ? "bg-primary! text-primary-foreground!" : "",
               )}
-              render={<Link href={item.href} />}
+              render={ item.href ? <Link href={item.href} /> : <></> }
             >
               {item.icon && <item.icon />}
               {item.title}
@@ -264,7 +264,7 @@ function NavMainSubItem({
             setActiveParent(parentTitle || "");
             setActiveChild(item.title!);
           }}
-          render={<Link href={item.href}>{item.title}</Link>}
+          render={ item.href ? <Link href={item.href}>{item.title}</Link> : <></> }
         />
       </SidebarMenuSubItem>
     );
