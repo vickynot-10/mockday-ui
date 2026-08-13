@@ -26,3 +26,18 @@ export function useSaveStatus() {
     },
   });
 }
+
+export function useDeleteStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: string[]) => {
+      const res = await api.delete("/status", {
+        data : data
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+  });
+}

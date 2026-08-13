@@ -1,7 +1,11 @@
 "use client";
 import { useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
-import { useGetStatus, useSaveStatus } from "@/hooks/queries/useStatus";
+import {
+  useGetStatus,
+  useSaveStatus,
+  useDeleteStatus,
+} from "@/hooks/queries/useStatus";
 import { Control, useForm, UseFormSetValue, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
 import { AppButton } from "@/components/common/AppButton";
@@ -16,7 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 
@@ -64,8 +69,16 @@ function ColorField({
 export default function CustomizableStatus() {
   const { data } = useGetStatus();
   const { mutate: saveStatus, isPending } = useSaveStatus();
+  const {
+    mutate: deleteStatus,
+    isPending: deleting,
+    variables: deletingIds,
+  } = useDeleteStatus();
+
   const [open, setOpen] = useState(false);
   const [editing_id, setEditingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
 
   const { register, handleSubmit, reset, setValue, control } =
     useForm<StatusForm>({
@@ -103,58 +116,107 @@ export default function CustomizableStatus() {
     );
   };
 
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function confirmDelete() {
+    deleteStatus(deleteTargetIds, {
+      onSuccess: () => {
+        setSelectedIds((prev) =>
+          prev.filter((id) => !deleteTargetIds.includes(id)),
+        );
+        setDeleteTargetIds([]);
+      },
+    });
+  }
+
+  function isRowDeleting(id: string) {
+    return deleting && deletingIds?.includes(id);
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mt-4 mb-4">
-        <BreadCrumbs items={items} />
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
+        <div className="flex items-center gap-3">
+          <BreadCrumbs items={items} />
+        </div>
+
+        <div className="flex items-center gap-2">
+         {statuses.length > 0 && (
+  <div className="h-9 w-9 flex items-center justify-center rounded-md border border-border">
+    <Checkbox
+      checked={selectedIds.length === statuses.length}
+      onCheckedChange={(checked) =>
+        setSelectedIds(checked ? statuses.map((s: any) => s._id) : [])
+      }
+    />
+  </div>
+)}
+
+          {selectedIds.length > 0 && (
             <AppVariantButton
-              onClick={openCreate}
-              variant="default"
+              variant="danger"
               size="sm"
               className="flex flex-row items-center gap-2"
+              onClick={() => setDeleteTargetIds(selectedIds)}
             >
-              {" "}
-              <Plus />{" "}
+              <Trash2 className="w-4 h-4" />
+              Delete {selectedIds.length} selected
             </AppVariantButton>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editing_id ? "Edit Status" : "New Status"}
-              </DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
-            >
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g. Interview"
-                  {...register("name", { required: true })}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="color">Color</Label>
-                <div className="flex items-center gap-2">
-                  <ColorField control={control} setValue={setValue} />
+          )}
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger>
+              <AppVariantButton
+                onClick={openCreate}
+                variant="default"
+                size="sm"
+                className="flex flex-row items-center gap-2"
+              >
+                {" "}
+                <Plus />{" "}
+              </AppVariantButton>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editing_id ? "Edit Status" : "New Status"}
+                </DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="flex flex-col gap-4"
+              >
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g. Interview"
+                    {...register("name", { required: true })}
+                  />
                 </div>
-              </div>
-              <DialogFooter>
-                <AppButton
-                  type="submit"
-                  idleLabel={editing_id ? "Save Changes" : "Create Status"}
-                  loadingLabel={editing_id ? "Saving..." : "Creating..."}
-                  successLabel={editing_id ? "Saved!" : "Created!"}
-                  isLoading={isPending}
-                />
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="color">Color</Label>
+                  <div className="flex items-center gap-2">
+                    <ColorField control={control} setValue={setValue} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <AppButton
+                    type="submit"
+                    idleLabel={editing_id ? "Save Changes" : "Create Status"}
+                    loadingLabel={editing_id ? "Saving..." : "Creating..."}
+                    successLabel={editing_id ? "Saved!" : "Created!"}
+                    isLoading={isPending}
+                  />
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -169,6 +231,10 @@ export default function CustomizableStatus() {
               className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-card hover:bg-accent/50 transition-colors"
             >
               <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={selectedIds.includes(status._id)}
+                  onCheckedChange={() => toggleSelect(status._id)}
+                />
                 <span
                   className="w-3 h-3 rounded-full shrink-0"
                   style={{ backgroundColor: status.color }}
@@ -177,17 +243,69 @@ export default function CustomizableStatus() {
                   {status.name}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => openEdit(status)}
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEdit(status)}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeleteTargetIds([status._id])}
+                  disabled={isRowDeleting(status._id)}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </Button>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      <Dialog
+        open={deleteTargetIds.length > 0}
+        onOpenChange={(v) => !v && setDeleteTargetIds([])}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Delete{" "}
+              {deleteTargetIds.length > 1
+                ? `${deleteTargetIds.length} statuses`
+                : "status"}
+              ?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This can't be undone. The selected status
+            {deleteTargetIds.length > 1 ? "es" : ""} will be permanently
+            removed.
+          </p>
+          <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
+            <AppVariantButton
+              variant="default"
+              size="sm"
+              onClick={() => setDeleteTargetIds([])}
+              disabled={deleting}
+            >
+              Cancel
+            </AppVariantButton>
+            <AppVariantButton
+              variant="danger"
+              size="sm"
+              onClick={confirmDelete}
+              disabled={deleting}
+              isLoading={deleting}
+            >
+              Delete
+            </AppVariantButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
