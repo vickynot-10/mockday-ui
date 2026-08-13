@@ -13,7 +13,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { JellyButton } from "@/components/godui/jelly-button";
+import { AppButton } from "@/components/common/AppButton";
+import AppVariantButton from "@/components/common/AppVariantButton";
 import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 
 const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
@@ -206,14 +207,10 @@ export default function AutoFill() {
           <div className="rounded-xl border  border-border bg-card p-6">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-lg font-semibold">Field Rules</h2>
-              <button
-                type="button"
-                onClick={AddItem}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm hover:opacity-90 transition"
-              >
+              <AppVariantButton type="button" size="sm" onClick={AddItem}>
                 <Plus className="w-4 h-4" />
                 Add Rule
-              </button>
+              </AppVariantButton>
             </div>
 
             <p className="text-xs text-muted-foreground mb-4">
@@ -234,14 +231,10 @@ export default function AutoFill() {
                       Add a rule to match labels on job forms to your answers.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={AddItem}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm hover:opacity-90 transition"
-                  >
+                  <AppVariantButton type="button" size="sm" onClick={AddItem}>
                     <Plus className="w-4 h-4" />
                     Add Rule
-                  </button>
+                  </AppVariantButton>
                 </div>
               )}
 
@@ -333,18 +326,23 @@ export default function AutoFill() {
         </div>
 
         <div className="sticky bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur py-4 flex justify-end gap-2">
-          <JellyButton type="button" onClick={OpenDialog} variant="secondary">
+          <AppVariantButton
+            type="button"
+            onClick={OpenDialog}
+            className="h-11 px-4"
+          >
             Reset
-          </JellyButton>
+          </AppVariantButton>
 
-          <JellyButton type="submit" disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 me-2" />
-            )}
-            {isPending ? "Saving..." : "Save Changes"}
-          </JellyButton>
+          <AppButton
+            type="submit"
+            icon={Save}
+            isLoading={isPending}
+            idleLabel="Save Changes"
+            loadingLabel="Saving..."
+            successLabel="Saved Successfully!"
+            className="h-11 py-0"
+          />
         </div>
       </form>
 
@@ -358,16 +356,16 @@ export default function AutoFill() {
             default values.
           </p>
           <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
-            <JellyButton variant="outline" size="sm" onClick={CloseDialog}>
+            <AppVariantButton size="sm" onClick={CloseDialog}>
               Cancel
-            </JellyButton>
-            <JellyButton
-              variant="destructive"
+            </AppVariantButton>
+            <AppVariantButton
+              variant="danger"
               size="sm"
               onClick={confirmResetForm}
             >
               Reset
-            </JellyButton>
+            </AppVariantButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

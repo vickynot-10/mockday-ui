@@ -1,6 +1,6 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
-import { JellyButton } from "@/components/godui/jelly-button";
+import AppVariantButton from "@/components/common/AppVariantButton";
 import { Download, Loader2, Star, Trash2, Plus } from "lucide-react";
 import ResumeCardSkeleton from "@/loaders/resume.loader";
 import {
@@ -126,23 +126,23 @@ export default function Resumes() {
           </span>
 
           {selectedIds.length > 0 && (
-            <JellyButton
-              variant="destructive"
+            <AppVariantButton
+              variant="danger"
               size="sm"
               className="flex flex-row items-center gap-2"
               onClick={() => setDeleteTargetIds(selectedIds)}
             >
               <Trash2 className="w-4 h-4" />
               Delete {selectedIds.length} selected
-            </JellyButton>
+            </AppVariantButton>
           )}
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={
-              <JellyButton
-                variant="primary"
+              <AppVariantButton
+                variant="default"
                 size="sm"
                 className="flex flex-row items-center gap-2"
                 disabled={resumes.length >= MAX_RESUMES}
@@ -244,37 +244,31 @@ export default function Resumes() {
 
                 <CardContent className="flex flex-col gap-3 p-4 pt-0">
                   <CardFooter className="gap-3 p-0 max-sm:flex-col max-sm:items-stretch">
-                    <JellyButton
-                      variant="primary"
+                    <AppVariantButton
+                      variant="default"
                       size="sm"
                       className="flex-1 flex flex-row items-center justify-center gap-1.5"
                       onClick={() =>
                         handleDownload(resume._id, resume.filename)
                       }
                       disabled={isPending}
+                      isLoading={isLoadingAction(resume._id, "download")}
                     >
-                      {isLoadingAction(resume._id, "download") ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Download className="w-3.5 h-3.5" />
-                      )}
+                      <Download className="w-3.5 h-3.5" />
                       Download
-                    </JellyButton>
+                    </AppVariantButton>
 
-                    <JellyButton
-                      variant="outline"
+                    <AppVariantButton
+                      variant="default"
                       size="sm"
                       className="flex-1 flex flex-row items-center justify-center gap-1.5"
                       onClick={() => setDeleteTargetIds([resume._id])}
                       disabled={isCardDeleting(resume._id)}
+                      isLoading={isCardDeleting(resume._id)}
                     >
-                      {isCardDeleting(resume._id) ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
-                      )}
+                      <Trash2 className="w-3.5 h-3.5" />
                       Delete
-                    </JellyButton>
+                    </AppVariantButton>
                   </CardFooter>
                 </CardContent>
               </Card>
@@ -302,26 +296,23 @@ export default function Resumes() {
             {deleteTargetIds.length > 1 ? "s" : ""} will be permanently removed.
           </p>
           <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
-            <JellyButton
-              variant="outline"
+            <AppVariantButton
+              variant="default"
               size="sm"
               onClick={() => setDeleteTargetIds([])}
               disabled={deleting}
             >
               Cancel
-            </JellyButton>
-            <JellyButton
-              variant="destructive"
+            </AppVariantButton>
+            <AppVariantButton
+              variant="danger"
               size="sm"
               onClick={confirmDelete}
               disabled={deleting}
+              isLoading={deleting}
             >
-              {deleting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                "Delete"
-              )}
-            </JellyButton>
+              Delete
+            </AppVariantButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

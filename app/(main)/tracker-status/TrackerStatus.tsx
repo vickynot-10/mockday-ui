@@ -17,8 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil } from "lucide-react";
-import { JellyButton } from "@/components/godui/jelly-button";
 import { toast } from "sonner";
+import AppVariantButton from "@/components/common/AppVariantButton";
 
 const items = [
   { label: "Settings", isSection: true },
@@ -109,9 +109,15 @@ export default function CustomizableStatus() {
         <BreadCrumbs items={items} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger>
-            <JellyButton size="sm" onClick={openCreate}>
-              <Plus />
-            </JellyButton>
+            <AppVariantButton
+              onClick={openCreate}
+              variant="default"
+              size="sm"
+              className="flex flex-row items-center gap-2"
+            >
+              {" "}
+              <Plus />{" "}
+            </AppVariantButton>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
