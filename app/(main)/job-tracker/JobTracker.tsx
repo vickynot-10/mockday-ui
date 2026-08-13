@@ -6,8 +6,8 @@ import { useState } from "react";
 import JobTrackerTable from "./components/TrackerTable";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
-import { JellyButton } from "@/components/godui/jelly-button";
 import Tooltip from "@/components/common/ToolTip";
+import AppVariantButton from "@/components/common/AppVariantButton";
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
 
@@ -50,9 +50,9 @@ export default function JobTracker() {
         </div>
         <div>
           <Tooltip content="Add a Tracker">
-            <JellyButton size="sm">
+            <AppVariantButton>
               <Plus />
-            </JellyButton>
+            </AppVariantButton>
           </Tooltip>
         </div>
       </div>

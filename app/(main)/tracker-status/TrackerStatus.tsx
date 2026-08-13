@@ -89,7 +89,7 @@ export default function CustomizableStatus() {
 
   const onSubmit = (values: StatusForm) => {
     saveStatus(
-      { id: editing_id, ...values },
+      { _id: editing_id, ...values },
       {
         onSuccess: (res: any) => {
           if (res.success) {
