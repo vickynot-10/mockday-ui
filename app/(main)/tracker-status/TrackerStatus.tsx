@@ -21,9 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
+import useDebounce from "@/hooks/app/useDebounce";
 
 const items = [
   { label: "Settings", isSection: true },
@@ -67,7 +68,9 @@ function ColorField({
 }
 
 export default function CustomizableStatus() {
-  const { data } = useGetStatus();
+  const [search, setSearch] = useState("");
+  const search_term = useDebounce(search, 500);
+  const { data } = useGetStatus(search_term);
   const { mutate: saveStatus, isPending } = useSaveStatus();
   const {
     mutate: deleteStatus,
@@ -137,25 +140,39 @@ export default function CustomizableStatus() {
     return deleting && deletingIds?.includes(id);
   }
 
+  function Searchstatus(val: string) {
+    setSearch(val);
+    setSelectedIds([]);
+  }
+
   return (
     <>
-      <div className="flex items-center justify-between mt-4 mb-4">
-        <div className="flex items-center gap-3">
-          <BreadCrumbs items={items} />
+      <BreadCrumbs items={items} />
+      <div className="flex items-center justify-between my-4">
+        <div className=" flex flex-row gap-3 items-center">
+          {statuses.length > 0 && (
+            <Checkbox
+              checked={selectedIds.length === statuses.length}
+              onCheckedChange={(checked) =>
+                setSelectedIds(checked ? statuses.map((s: any) => s._id) : [])
+              }
+              className=" h-6 w-6"
+            />
+          )}
+          <div className="relative w-full max-w-sm ">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Input
+              value={search}
+              onChange={(e) => {
+                Searchstatus(e.target.value);
+              }}
+              placeholder="Search Status"
+              className="pl-9"
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
-         {statuses.length > 0 && (
-  <div className="h-9 w-9 flex items-center justify-center rounded-md border border-border">
-    <Checkbox
-      checked={selectedIds.length === statuses.length}
-      onCheckedChange={(checked) =>
-        setSelectedIds(checked ? statuses.map((s: any) => s._id) : [])
-      }
-    />
-  </div>
-)}
-
           {selectedIds.length > 0 && (
             <AppVariantButton
               variant="danger"
