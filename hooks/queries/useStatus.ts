@@ -4,12 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 const QUERY_KEY = "customizable-status";
 
 export const useGetStatus = (search?: string) => {
-  
   return useQuery({
     queryKey: [QUERY_KEY, search],
     queryFn: async () => {
       const res = await api.get("/status", {
-        params:{search},
+        params: { search },
       });
       return res.data ?? null;
     },
@@ -37,6 +36,19 @@ export function useDeleteStatus() {
       const res = await api.delete("/status", {
         data: data,
       });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+  });
+}
+
+export function useSetAsDefault() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.patch("/status", { id });
       return res.data;
     },
     onSuccess: () => {

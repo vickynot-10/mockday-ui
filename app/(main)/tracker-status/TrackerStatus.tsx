@@ -5,6 +5,7 @@ import {
   useGetStatus,
   useSaveStatus,
   useDeleteStatus,
+  useSetAsDefault,
 } from "@/hooks/queries/useStatus";
 import { Control, useForm, UseFormSetValue, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
@@ -77,11 +78,16 @@ export default function CustomizableStatus() {
     isPending: deleting,
     variables: deletingIds,
   } = useDeleteStatus();
+  const {
+    mutate: setAsDefault,
+    isPending: settingDefault,
+    variables: settingDefaultId,
+  } = useSetAsDefault();
 
   const [open, setOpen] = useState(false);
-  const [editing_id, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control } =
@@ -91,22 +97,22 @@ export default function CustomizableStatus() {
 
   const statuses = data?.data ?? [];
 
-  const openCreate = () => {
+  function openCreate() {
     setEditingId(null);
     reset({ name: "", color: "#3B82F6" });
     setOpen(true);
-  };
+  }
 
-  const openEdit = (status: { _id: string; name: string; color: string }) => {
+  function openEdit(status: { _id: string; name: string; color: string }) {
     setEditingId(status._id);
     setValue("name", status.name);
     setValue("color", status.color);
     setOpen(true);
-  };
+  }
 
-  const onSubmit = (values: StatusForm) => {
-    if (editing_id) {
-      values._id = editing_id;
+  function onSubmit(values: StatusForm) {
+    if (editingId) {
+      values._id = editingId;
     } else {
       delete values._id;
     }
@@ -119,7 +125,7 @@ export default function CustomizableStatus() {
         }
       },
     });
-  };
+  }
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) =>
@@ -135,13 +141,17 @@ export default function CustomizableStatus() {
     }
   }
 
+  function openDeleteConfirm(ids: string[]) {
+    setSelectedIds(ids);
+    setConfirmDeleteOpen(true);
+  }
+
   function confirmDelete() {
-    deleteStatus(deleteTargetIds, {
+    deleteStatus(selectedIds, {
       onSuccess: () => {
-        setSelectedIds((prev) =>
-          prev.filter((id) => !deleteTargetIds.includes(id)),
-        );
-        setDeleteTargetIds([]);
+        setSelectedIds([]);
+        setConfirmDeleteOpen(false);
+        setSelectMode(false);
       },
     });
   }
@@ -150,7 +160,21 @@ export default function CustomizableStatus() {
     return deleting && deletingIds?.includes(id);
   }
 
-  function Searchstatus(val: string) {
+  function isSettingDefault(id: string) {
+    return settingDefault && settingDefaultId === id;
+  }
+
+  function handleSetDefault(id: string) {
+    setAsDefault(id, {
+      onSuccess: (res: any) => {
+        if (res.success) {
+          toast.success(res?.msg ?? "Default status updated");
+        }
+      },
+    });
+  }
+
+  function searchStatus(val: string) {
     setSearch(val);
     setSelectedIds([]);
   }
@@ -163,19 +187,19 @@ export default function CustomizableStatus() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <Input
             value={search}
-            onChange={(e) => Searchstatus(e.target.value)}
+            onChange={(e) => searchStatus(e.target.value)}
             placeholder="Search Status"
             className="pl-9"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          {selectedIds.length > 0 && (
+          {selectMode && selectedIds.length > 0 && (
             <AppVariantButton
               variant="danger"
               size="sm"
               className="flex flex-row items-center gap-2"
-              onClick={() => setDeleteTargetIds(selectedIds)}
+              onClick={() => openDeleteConfirm(selectedIds)}
             >
               <Trash2 className="w-4 h-4" />
               Delete {selectedIds.length} selected
@@ -209,7 +233,7 @@ export default function CustomizableStatus() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editing_id ? "Edit Status" : "New Status"}
+                  {editingId ? "Edit Status" : "New Status"}
                 </DialogTitle>
               </DialogHeader>
               <form
@@ -231,9 +255,9 @@ export default function CustomizableStatus() {
                 <DialogFooter>
                   <AppButton
                     type="submit"
-                    idleLabel={editing_id ? "Save Changes" : "Create Status"}
-                    loadingLabel={editing_id ? "Saving..." : "Creating..."}
-                    successLabel={editing_id ? "Saved!" : "Created!"}
+                    idleLabel={editingId ? "Save Changes" : "Create Status"}
+                    loadingLabel={editingId ? "Saving..." : "Creating..."}
+                    successLabel={editingId ? "Saved!" : "Created!"}
                     isLoading={isPending}
                   />
                 </DialogFooter>
@@ -243,20 +267,20 @@ export default function CustomizableStatus() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <AnimatePresence initial={false}>
           {statuses.map((status: any) => {
             const isSelected = selectedIds.includes(status._id);
             return (
               <motion.div
                 key={status._id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => handleChipClick(status)}
                 className={cn(
-                  "group flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-full border cursor-pointer transition-colors",
+                  "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors overflow-hidden",
                   isSelected
                     ? "border-primary bg-primary/5"
                     : "border-border bg-card hover:bg-accent/50",
@@ -264,15 +288,48 @@ export default function CustomizableStatus() {
                 )}
               >
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
+                  className="absolute left-0 top-0 h-full w-1.5"
                   style={{ backgroundColor: status.color }}
                 />
-                <span className="text-sm font-medium text-foreground">
-                  {status.name}
-                </span>
+                <span
+                  className="w-8 h-8 rounded-lg shrink-0 ml-1"
+                  style={{ backgroundColor: status.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {status.name}
+                    </span>
+                    {status.isDefault && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground uppercase">
+                    {status.color}
+                  </span>
+                </div>
 
                 {!selectMode && (
-                  <div className="flex items-center gap-0.5 ml-1">
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSetDefault(status._id);
+                      }}
+                      disabled={
+                        status.default || isSettingDefault(status._id)
+                      }
+                      className="p-1 rounded-full hover:bg-background disabled:opacity-40"
+                    >
+                      <Star
+                        className={cn(
+                          "w-3.5 h-3.5",
+                          status.default && "fill-current text-amber-500",
+                        )}
+                      />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -280,22 +337,33 @@ export default function CustomizableStatus() {
                       }}
                       className="p-1 rounded-full hover:bg-background"
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setDeleteTargetIds([status._id]);
+                        openDeleteConfirm([status._id]);
                       }}
                       className="p-1 rounded-full hover:bg-background"
                     >
-                      <Trash2 className="w-3 h-3 text-destructive" />
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
                     </button>
                   </div>
                 )}
 
-                {selectMode && isSelected && (
-                  <X className="w-3 h-3 ml-1" />
+                {selectMode && (
+                  <div
+                    className={cn(
+                      "w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
+                      isSelected
+                        ? "bg-primary border-primary"
+                        : "border-border",
+                    )}
+                  >
+                    {isSelected && (
+                      <X className="w-3 h-3 text-primary-foreground" />
+                    )}
+                  </div>
                 )}
               </motion.div>
             );
@@ -303,34 +371,35 @@ export default function CustomizableStatus() {
         </AnimatePresence>
 
         {statuses.length === 0 && (
-          <p className="text-sm text-muted-foreground py-2">No statuses found</p>
+          <p className="text-sm text-muted-foreground py-2">
+            No statuses found
+          </p>
         )}
       </div>
 
       <Dialog
-        open={deleteTargetIds.length > 0}
-        onOpenChange={(v) => !v && setDeleteTargetIds([])}
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => !v && setConfirmDeleteOpen(false)}
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>
               Delete{" "}
-              {deleteTargetIds.length > 1
-                ? `${deleteTargetIds.length} statuses`
+              {selectedIds.length > 1
+                ? `${selectedIds.length} statuses`
                 : "status"}
               ?
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             This can't be undone. The selected status
-            {deleteTargetIds.length > 1 ? "es" : ""} will be permanently
-            removed.
+            {selectedIds.length > 1 ? "es" : ""} will be permanently removed.
           </p>
           <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
             <AppVariantButton
               variant="default"
               size="sm"
-              onClick={() => setDeleteTargetIds([])}
+              onClick={() => setConfirmDeleteOpen(false)}
               disabled={deleting}
             >
               Cancel
