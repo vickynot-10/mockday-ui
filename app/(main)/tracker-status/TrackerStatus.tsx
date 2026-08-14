@@ -17,14 +17,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
+import { cn } from "@/lib/utils";
 
 const items = [
   { label: "Settings", isSection: true },
@@ -34,6 +33,7 @@ const items = [
 type StatusForm = {
   name: string;
   color: string;
+  _id?: string | null;
 };
 
 function ColorField({
@@ -82,6 +82,7 @@ export default function CustomizableStatus() {
   const [editing_id, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control } =
     useForm<StatusForm>({
@@ -104,25 +105,34 @@ export default function CustomizableStatus() {
   };
 
   const onSubmit = (values: StatusForm) => {
-    saveStatus(
-      { _id: editing_id, ...values },
-      {
-        onSuccess: (res: any) => {
-          if (res.success) {
-            toast.success(res.msg ?? "Saved Successfully !");
-
-            setOpen(false);
-            reset();
-          }
-        },
+    if (editing_id) {
+      values._id = editing_id;
+    } else {
+      delete values._id;
+    }
+    saveStatus(values, {
+      onSuccess: (res: any) => {
+        if (res.success) {
+          toast.success(res.msg ?? "Saved Successfully !");
+          setOpen(false);
+          reset();
+        }
       },
-    );
+    });
   };
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+  }
+
+  function handleChipClick(status: any) {
+    if (selectMode) {
+      toggleSelect(status._id);
+    } else {
+      openEdit(status);
+    }
   }
 
   function confirmDelete() {
@@ -149,27 +159,14 @@ export default function CustomizableStatus() {
     <>
       <BreadCrumbs items={items} />
       <div className="flex items-center justify-between my-4">
-        <div className=" flex flex-row gap-3 items-center">
-          {statuses.length > 0 && (
-            <Checkbox
-              checked={selectedIds.length === statuses.length}
-              onCheckedChange={(checked) =>
-                setSelectedIds(checked ? statuses.map((s: any) => s._id) : [])
-              }
-              className=" h-6 w-6"
-            />
-          )}
-          <div className="relative w-full max-w-sm ">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                Searchstatus(e.target.value);
-              }}
-              placeholder="Search Status"
-              className="pl-9"
-            />
-          </div>
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <Input
+            value={search}
+            onChange={(e) => Searchstatus(e.target.value)}
+            placeholder="Search Status"
+            className="pl-9"
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -185,6 +182,19 @@ export default function CustomizableStatus() {
             </AppVariantButton>
           )}
 
+          {statuses.length > 0 && (
+            <AppVariantButton
+              variant={selectMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setSelectMode((prev) => !prev);
+                setSelectedIds([]);
+              }}
+            >
+              {selectMode ? "Done" : "Select"}
+            </AppVariantButton>
+          )}
+
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger>
               <AppVariantButton
@@ -193,8 +203,7 @@ export default function CustomizableStatus() {
                 size="sm"
                 className="flex flex-row items-center gap-2"
               >
-                {" "}
-                <Plus />{" "}
+                <Plus className="w-4 h-4" />
               </AppVariantButton>
             </DialogTrigger>
             <DialogContent>
@@ -217,9 +226,7 @@ export default function CustomizableStatus() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="color">Color</Label>
-                  <div className="flex items-center gap-2">
-                    <ColorField control={control} setValue={setValue} />
-                  </div>
+                  <ColorField control={control} setValue={setValue} />
                 </div>
                 <DialogFooter>
                   <AppButton
@@ -236,51 +243,68 @@ export default function CustomizableStatus() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2.5">
         <AnimatePresence initial={false}>
-          {statuses.map((status: any) => (
-            <motion.div
-              key={status._id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-card hover:bg-accent/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  checked={selectedIds.includes(status._id)}
-                  onCheckedChange={() => toggleSelect(status._id)}
-                />
+          {statuses.map((status: any) => {
+            const isSelected = selectedIds.includes(status._id);
+            return (
+              <motion.div
+                key={status._id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => handleChipClick(status)}
+                className={cn(
+                  "group flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-full border cursor-pointer transition-colors",
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:bg-accent/50",
+                  isRowDeleting(status._id) && "opacity-50 pointer-events-none",
+                )}
+              >
                 <span
-                  className="w-3 h-3 rounded-full shrink-0"
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: status.color }}
                 />
                 <span className="text-sm font-medium text-foreground">
                   {status.name}
                 </span>
-              </div>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => openEdit(status)}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDeleteTargetIds([status._id])}
-                  disabled={isRowDeleting(status._id)}
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                </Button>
-              </div>
-            </motion.div>
-          ))}
+                {!selectMode && (
+                  <div className="flex items-center gap-0.5 ml-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(status);
+                      }}
+                      className="p-1 rounded-full hover:bg-background"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTargetIds([status._id]);
+                      }}
+                      className="p-1 rounded-full hover:bg-background"
+                    >
+                      <Trash2 className="w-3 h-3 text-destructive" />
+                    </button>
+                  </div>
+                )}
+
+                {selectMode && isSelected && (
+                  <X className="w-3 h-3 ml-1" />
+                )}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
+
+        {statuses.length === 0 && (
+          <p className="text-sm text-muted-foreground py-2">No statuses found</p>
+        )}
       </div>
 
       <Dialog

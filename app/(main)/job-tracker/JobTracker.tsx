@@ -35,7 +35,7 @@ export default function JobTracker() {
     <>
       <BreadCrumbs items={items} />
 
-      <div className=" flex flex-row items-center justify-between mb-4">
+      <div className=" flex flex-row items-center justify-between my-4">
         <div className="relative w-full max-w-sm ">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <Input

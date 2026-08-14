@@ -5,14 +5,14 @@ interface ButtonProps extends Omit<
   React.ComponentProps<typeof Button>,
   "variant" | "size"
 > {
-  variant?: "default" | "success" | "danger";
+  variant?: "default" | "outline" | "success" | "danger";
   size?: "default" | "xs" | "sm" | "lg";
   isLoading?: boolean;
   children?: React.ReactNode;
 }
 
 export default function AppVariantButton({
-  variant,
+  variant = "default",
   size = "default",
   isLoading = false,
   children,
@@ -20,11 +20,20 @@ export default function AppVariantButton({
   disabled,
   ...props
 }: ButtonProps) {
-  const class_var = `group-hover:-translate-y-1 transition-transform duration-200 ${variant === "danger" ? "bg-red-500 hover:bg-red-500/80 text-white" : variant === "success" ? " bg-green-500  hover:bg-green-500/80 text-white" : ""}   cursor-pointer ${className ?? ""}`;
+  const isCustom = variant === "danger" || variant === "success";
+
+  const class_var = `group-hover:-translate-y-1 transition-transform duration-200 ${
+    variant === "danger"
+      ? "bg-red-500 hover:bg-red-500/80 text-white"
+      : variant === "success"
+      ? "bg-green-500 hover:bg-green-500/80 text-white"
+      : ""
+  } cursor-pointer ${className ?? ""}`;
 
   return (
     <div className="group">
       <Button
+        variant={isCustom ? undefined : variant}
         className={class_var}
         size={size}
         disabled={disabled || isLoading}
