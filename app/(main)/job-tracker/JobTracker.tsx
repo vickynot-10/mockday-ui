@@ -2,21 +2,20 @@
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import useDebounce from "@/hooks/app/useDebounce";
 import { useGetTrackers } from "@/hooks/queries/useTrackers";
+import StatusMenu from "./components/StatusChange";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import Tooltip from "@/components/common/ToolTip";
 import AppVariantButton from "@/components/common/AppVariantButton";
-
+import { formatDateTime } from "@/utils/formatDateTime";
 import {
   AppTable,
   AppTableColumn,
   AppTablePageInfo,
 } from "@/components/common/AppTable";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import AppIconButton from "@/components/common/AppIconButton";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -56,8 +55,6 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
             height={20}
             className="rounded object-cover"
             onError={(e) => {
-              console.log(row.image)
-              console.log(e ,"on eroro")
               e.currentTarget.style.display = "none";
             }}
           />
@@ -94,7 +91,6 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
         style={{
           backgroundColor: `${row.status_result?.color}1a`,
           borderColor: row.status_result?.color,
-          color: row.status_result?.color,
         }}
       >
         {row.status_result?.name}
@@ -104,7 +100,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
   {
     key: "applied_on",
     label: "Applied On",
-    render: (row) => new Date(row.applied_on).toLocaleDateString(),
+    render: (row) => formatDateTime(row.applied_on),
   },
   {
     key: "actions",
@@ -112,12 +108,21 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
     center: true,
     render: () => (
       <div className="flex items-center justify-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <AppIconButton
+          icon={<Pencil className="h-4 w-4" />}
+          tooltip="Edit"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+        />
+
+        <AppIconButton
+          icon={<Trash2 className="h-4 w-4" />}
+          variant="ghost"
+          tooltip="Delete"
+          size="icon"
+          className="h-8 w-8 text-destructive"
+        />
       </div>
     ),
   },

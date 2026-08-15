@@ -3,76 +3,34 @@ import { useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import {
   useGetStatus,
-  useSaveStatus,
   useDeleteStatus,
   useSetAsDefault,
 } from "@/hooks/queries/useStatus";
-import { Control, useForm, UseFormSetValue, useWatch } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
-import { AppButton } from "@/components/common/AppButton";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
 import { cn } from "@/lib/utils";
+import CreateStatus from "@/components/common/CreateStatus";
 
 const items = [
   { label: "Settings", isSection: true },
   { label: "Tracker Status" },
 ];
 
-type StatusForm = {
-  name: string;
-  color: string;
-  _id?: string | null;
-};
-
-function ColorField({
-  control,
-  setValue,
-}: {
-  control: Control<StatusForm>;
-  setValue: UseFormSetValue<StatusForm>;
-}) {
-  const colorValue = useWatch({ control, name: "color" });
-
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        id="color"
-        type="color"
-        className="w-10 h-9 rounded-md border border-border cursor-pointer bg-transparent"
-        value={colorValue}
-        onChange={(e) =>
-          setValue("color", e.target.value, { shouldDirty: true })
-        }
-      />
-      <Input
-        value={colorValue}
-        onChange={(e) =>
-          setValue("color", e.target.value, { shouldDirty: true })
-        }
-        className="flex-1"
-      />
-    </div>
-  );
-}
-
 export default function CustomizableStatus() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
   const { data } = useGetStatus(search_term);
-  const { mutate: saveStatus, isPending } = useSaveStatus();
   const {
     mutate: deleteStatus,
     isPending: deleting,
@@ -89,42 +47,16 @@ export default function CustomizableStatus() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
-
-  const { register, handleSubmit, reset, setValue, control } =
-    useForm<StatusForm>({
-      defaultValues: { name: "", color: "#3B82F6" },
-    });
-
   const statuses = data?.data ?? [];
 
   function openCreate() {
     setEditingId(null);
-    reset({ name: "", color: "#3B82F6" });
     setOpen(true);
   }
 
   function openEdit(status: { _id: string; name: string; color: string }) {
     setEditingId(status._id);
-    setValue("name", status.name);
-    setValue("color", status.color);
     setOpen(true);
-  }
-
-  function onSubmit(values: StatusForm) {
-    if (editingId) {
-      values._id = editingId;
-    } else {
-      delete values._id;
-    }
-    saveStatus(values, {
-      onSuccess: (res: any) => {
-        if (res.success) {
-          toast.success(res.msg ?? "Saved Successfully !");
-          setOpen(false);
-          reset();
-        }
-      },
-    });
   }
 
   function toggleSelect(id: string) {
@@ -219,8 +151,13 @@ export default function CustomizableStatus() {
             </AppVariantButton>
           )}
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger>
+          <CreateStatus
+            open={open}
+            onOpenChange={setOpen}
+            status={
+              editingId ? statuses.find((s: any) => s._id === editingId) : null
+            }
+            trigger={
               <AppVariantButton
                 onClick={openCreate}
                 variant="default"
@@ -229,41 +166,8 @@ export default function CustomizableStatus() {
               >
                 <Plus className="w-4 h-4" />
               </AppVariantButton>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingId ? "Edit Status" : "New Status"}
-                </DialogTitle>
-              </DialogHeader>
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="flex flex-col gap-4"
-              >
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g. Interview"
-                    {...register("name", { required: true })}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="color">Color</Label>
-                  <ColorField control={control} setValue={setValue} />
-                </div>
-                <DialogFooter>
-                  <AppButton
-                    type="submit"
-                    idleLabel={editingId ? "Save Changes" : "Create Status"}
-                    loadingLabel={editingId ? "Saving..." : "Creating..."}
-                    successLabel={editingId ? "Saved!" : "Created!"}
-                    isLoading={isPending}
-                  />
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+            }
+          />
         </div>
       </div>
 
@@ -318,9 +222,7 @@ export default function CustomizableStatus() {
                         e.stopPropagation();
                         handleSetDefault(status._id);
                       }}
-                      disabled={
-                        status.default || isSettingDefault(status._id)
-                      }
+                      disabled={status.default || isSettingDefault(status._id)}
                       className="p-1 rounded-full hover:bg-background disabled:opacity-40"
                     >
                       <Star

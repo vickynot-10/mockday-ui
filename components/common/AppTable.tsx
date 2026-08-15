@@ -61,18 +61,19 @@ export function AppTable<T extends Record<string, unknown>>({
   emptyMessage = "No records found",
 }: AppTableProps<T>) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const startRow = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endRow = Math.min(page * pageSize, totalCount);
-
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(page.toString());
 
   const goToPage = (nextPage: number) => {
-    const clamped = Math.min(Math.max(nextPage, 1), totalPages);
-    setInputValue(clamped.toString());
+    if (nextPage < 1 || nextPage > totalPages) {
+      setInputValue(page.toString());
+      setIsEditing(false);
+      return;
+    }
+    setInputValue(nextPage.toString());
     setIsEditing(false);
-    if (clamped === page) return;
-    onPageChange({ page: clamped, pageSize });
+    if (nextPage === page) return;
+    onPageChange({ page: nextPage, pageSize });
   };
 
   const changePageSize = (nextPageSize: number) => {
