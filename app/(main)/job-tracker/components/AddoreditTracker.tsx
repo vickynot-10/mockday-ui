@@ -1,30 +1,18 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { format } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { useGetTrackerByID, useSaveTracker } from "@/hooks/queries/useTrackers";
+import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AppButton } from "@/components/common/AppButton";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import AppIconButton from "@/components/common/AppIconButton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Bell,
-  CalendarIcon,
-  Clock,
-  ChevronDown,
-  FileText,
-  StickyNote,
-} from "lucide-react";
+import { FileText, StickyNote, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrackerForm } from "@/types/tracker.types";
 import AppVariantButton from "@/components/common/AppVariantButton";
@@ -39,15 +27,13 @@ const EMPTY_FORM: TrackerForm = {
   page_title: "",
   h1: "",
   site_name: "",
-  notes: "",
-  reminder_date: undefined,
-  reminder_time: "",
-  reminder_note: "",
+  status: null,
+  notes: [],
 };
 
 const tabs = [
   { id: "details", label: "Job Details", icon: FileText },
-  { id: "notes", label: "Notes & Reminder", icon: StickyNote },
+  { id: "notes", label: "Notes", icon: StickyNote },
 ];
 
 const variants = {
@@ -65,40 +51,113 @@ type EditProps = {
 export default function AddOrEditJobTracker({ id }: EditProps) {
   const { data, isLoading } = useGetTrackerByID(id);
   const { mutate, isPending } = useSaveTracker();
-  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const { data: statusData } = useGetAllStatus();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [direction, setDirection] = useState(1);
+  const [focusedNoteIndex, setFocusedNoteIndex] = useState<number | null>(null);
+  const noteRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const { register, handleSubmit, reset, control, watch, formState } =
+  const statuses = statusData?.data ?? [];
+  const initialValues = useRef<TrackerForm>(EMPTY_FORM);
+
+  const { register, handleSubmit, reset, formState, watch, setValue } =
     useForm<TrackerForm>({
       defaultValues: EMPTY_FORM,
     });
 
+  const currentStatus = watch("status");
+  const notes = watch("notes") || [];
+
   useEffect(() => {
     if (!data?.data) return;
-    reset({
+    const rawNotes = data.data.notes;
+    const notesArray: string[] = Array.isArray(rawNotes)
+      ? rawNotes
+      : rawNotes
+      ? [rawNotes]
+      : [];
+
+    const loaded: TrackerForm = {
       ...EMPTY_FORM,
       ...data.data,
-      reminder_date: data.data.reminder_date
-        ? new Date(data.data.reminder_date)
-        : undefined,
-    });
+      status: data.data.status ?? null,
+      notes: notesArray,
+    };
+    reset(loaded);
+    initialValues.current = loaded;
   }, [data]);
 
   const router = useRouter();
+
+  function AddNote() {
+    setValue("notes", [...notes, ""], { shouldDirty: true });
+  }
+
+  function AddNoteAt(index: number) {
+    const next = [...notes];
+    next.splice(index + 1, 0, "");
+    setValue("notes", next, { shouldDirty: true });
+  }
+
+  function RemoveNote(index: number) {
+    const next = [...notes];
+    next.splice(index, 1);
+    setValue("notes", next, { shouldDirty: true });
+
+    const nextFocusIndex = index > 0 ? index - 1 : 0;
+    setFocusedNoteIndex(next.length > 0 ? nextFocusIndex : null);
+
+    requestAnimationFrame(() => {
+      noteRefs.current[nextFocusIndex]?.focus();
+    });
+  }
+
+  function SelectStatus(status_id: string) {
+    setValue("status", status_id, { shouldDirty: true });
+  }
+
+  useHotkeys(
+    "ctrl+enter",
+    (e) => {
+      e.preventDefault();
+      if (activeTab !== "notes") return;
+      const at = focusedNoteIndex ?? notes.length - 1;
+      AddNoteAt(at);
+    },
+    { enableOnFormTags: true },
+    [activeTab, focusedNoteIndex, notes.length],
+  );
+
+  useHotkeys(
+    "ctrl+shift+backspace",
+    (e) => {
+      e.preventDefault();
+      if (activeTab !== "notes") return;
+      if (focusedNoteIndex === null) return;
+      RemoveNote(focusedNoteIndex);
+    },
+    { enableOnFormTags: true },
+    [activeTab, focusedNoteIndex],
+  );
 
   if (isLoading) {
     return <TrackerFormSkeleton />;
   }
 
   function onSubmit(values: TrackerForm) {
-    const payload = id ? { ...values, _id: id } : values;
+    const values_notes = values.notes.filter(Boolean);
+
+    const payload = id
+      ? { ...values, notes: values_notes, _id: id }
+      : { ...values, notes: values_notes };
+
     mutate(payload);
   }
 
   function GoBack() {
     router.push("/job-tracker");
   }
+
   function handleTabChange(newId: string) {
     const prevIdx = tabs.findIndex((t) => t.id === activeTab);
     const nextIdx = tabs.findIndex((t) => t.id === newId);
@@ -106,25 +165,12 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
     setActiveTab(newId);
   }
 
-  const selectedDate = watch("reminder_date");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const isToday =
-    selectedDate instanceof Date &&
-    selectedDate.toDateString() === new Date().toDateString();
-
-  const minTime = isToday
-    ? `${String(new Date().getHours()).padStart(2, "0")}:${String(
-        new Date().getMinutes(),
-      ).padStart(2, "0")}`
-    : "00:00";
-
   const breadcrumb_items = [
     { label: "Apps", isSection: true },
     { label: "Trackers", href: "/job-tracker" },
     { label: id ? "Edit" : "Add" },
   ];
+
   return (
     <>
       <BreadCrumbs items={breadcrumb_items} />
@@ -258,94 +304,118 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
                 transition={transition}
                 className="flex flex-col gap-6"
               >
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">Reminder</Label>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs text-muted-foreground">
-                      Date
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="reminder_date"
-                      render={({ field }) => (
-                        <Popover
-                          open={datePopoverOpen}
-                          onOpenChange={setDatePopoverOpen}
+                <div className="flex flex-col gap-3">
+                  <Label>Status</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {statuses.map((item: any) => {
+                      const isActive = item._id === currentStatus;
+                      return (
+                        <button
+                          key={item._id}
+                          type="button"
+                          onClick={() => SelectStatus(item._id)}
+                          className={cn(
+                            "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                            isActive
+                              ? "border-primary bg-primary/10 text-foreground"
+                              : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                          )}
                         >
-                          <PopoverTrigger
-                            render={
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className={cn(
-                                  "w-full justify-start text-left font-normal h-10",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Select a date</span>
-                                )}
-                                <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            }
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: item.color }}
                           />
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={(selected_date) => {
-                                field.onChange(selected_date);
-                                setDatePopoverOpen(false);
-                              }}
-                              disabled={(check_date) => check_date < today}
-                              className="rounded-md border-none"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                    />
-                  </div>
+                          {item.name}
+                        </button>
+                      );
+                    })}
 
-                  <div className="flex flex-col gap-1.5">
-                    <Label
-                      htmlFor="reminder_time"
-                      className="text-xs text-muted-foreground flex items-center gap-1.5"
-                    >
-                      <Clock className="size-3.5" /> Time
-                    </Label>
-                    <Input
-                      id="reminder_time"
-                      type="time"
-                      min={minTime}
-                      {...register("reminder_time")}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 col-span-2">
-                    <Label
-                      htmlFor="reminder_note"
-                      className="text-xs text-muted-foreground"
-                    >
-                      Note
-                    </Label>
-                    <Input
-                      id="reminder_note"
-                      placeholder="e.g. Follow up with recruiter"
-                      {...register("reminder_note")}
-                    />
+                    {statuses.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No statuses created yet
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="notes">Explained Notes</Label>
-                  <Textarea id="notes" rows={8} {...register("notes")} />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Notes</Label>
+                    <AppIconButton
+                      icon={<Plus className="h-4 w-4" />}
+                      tooltip="Add Note"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={AddNote}
+                      type="button"
+                    />
+                  </div>
+
+                  {notes.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Ctrl + Enter to add a row · Ctrl + Shift + Backspace to delete the current row
+                    </p>
+                  )}
+
+                  <AnimatePresence initial={false}>
+                    {notes.map((_, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-start gap-2"
+                      >
+                        {(() => {
+                          const { ref: registerRef, ...rest } = register(
+                            `notes.${index}`,
+                          );
+                          return (
+                            <Input
+                              ref={(el) => {
+                                registerRef(el);
+                                noteRefs.current[index] = el;
+                              }}
+                              placeholder="e.g. Recruiter mentioned second round next week"
+                              onFocus={() => setFocusedNoteIndex(index)}
+                              {...rest}
+                            />
+                          );
+                        })()}
+                        <AppIconButton
+                          icon={<Plus className="h-4 w-4" />}
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0"
+                          onClick={() => AddNoteAt(index)}
+                          type="button"
+                        />
+                        <AppIconButton
+                          icon={<Trash2 className="h-4 w-4" />}
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive shrink-0"
+                          onClick={() => RemoveNote(index)}
+                          type="button"
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  {notes.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={AddNote}
+                      className="flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg py-10 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                    >
+                      <span className="flex items-center justify-center w-9 h-9 rounded-full border border-border">
+                        <Plus className="h-4 w-4" />
+                      </span>
+                      <span className="text-sm">No notes yet — add one</span>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}

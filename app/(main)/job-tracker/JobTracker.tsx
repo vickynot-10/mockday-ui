@@ -2,8 +2,10 @@
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import useDebounce from "@/hooks/app/useDebounce";
 import { useGetTrackers } from "@/hooks/queries/useTrackers";
+import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import StatusMenu from "./components/StatusChange";
-import { useState } from "react";
+import CreateStatus from "@/components/common/CreateStatus";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { formatDateTime } from "@/utils/formatDateTime";
@@ -14,10 +16,6 @@ import {
 } from "@/components/common/AppTable";
 import { Badge } from "@/components/ui/badge";
 import AppIconButton from "@/components/common/AppIconButton";
-import AddOrEditTrackerModal from "./components/AddoreditTracker";
-import { Button } from "@/components/ui/button";
-import Tooltip from "@/components/common/ToolTip";
-import Link from "next/link";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -39,96 +37,6 @@ type TrackerRow = {
   status_result: TrackerStatus;
 };
 
-const trackerColumns: AppTableColumn<TrackerRow>[] = [
-  {
-    key: "company",
-    label: "Company",
-    render: (row) => (
-      <div className="flex items-start gap-2 flex-col">
-        <span className="font-medium">{row.company}</span>
-        {row.image && (
-          <span className="flex items-center justify-center w-20 max-h-9 rounded-md bg-white shrink-0 overflow-hidden">
-            <img
-              src={row.image}
-              alt={row.company}
-              className=" object-contain"
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.parentElement!.style.display = "none";
-              }}
-            />
-          </span>
-        )}
-      </div>
-    ),
-  },
-  {
-    key: "site_name",
-    label: "Source",
-    render: (row) => {
-      if (!row.url || !row.site_name) {
-        return "NA";
-      }
-      return (
-        <a
-          href={row.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline-offset-4 decoration-transparent transition-all duration-200 hover:underline hover:decoration-current"
-        >
-          {row.site_name}
-        </a>
-      );
-    },
-  },
-  {
-    key: "status",
-    label: "Status",
-    center: true,
-    render: (row) => (
-      <Badge
-        variant="outline"
-        style={{
-          backgroundColor: `${row.status_result?.color}1a`,
-          borderColor: row.status_result?.color,
-        }}
-      >
-        {row.status_result?.name ?? "Applied"}
-      </Badge>
-    ),
-  },
-  {
-    key: "applied_on",
-    label: "Applied On",
-    render: (row) => formatDateTime(row.applied_on),
-  },
-  {
-    key: "actions",
-    label: "Actions",
-    center: true,
-    render: (row) => (
-      <div className="flex items-center justify-center gap-1">
-        <AppIconButton
-          icon={<Pencil className="h-4 w-4" />}
-          tooltip="Edit"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          href={`/job-tracker/edit/${row._id}`}
-        />
-        <AppIconButton
-          icon={<Trash2 className="h-4 w-4" />}
-          variant="ghost"
-          tooltip="Delete"
-          size="icon"
-          className="h-8 w-8 text-destructive"
-        />
-        <StatusMenu id={row._id} status={row.status} />
-      </div>
-    ),
-  },
-];
-
 export default function JobTracker() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
@@ -145,8 +53,114 @@ export default function JobTracker() {
     search: search_term,
   });
 
+  const { data: statusData } = useGetAllStatus();
+  const statuses: TrackerStatus[] = statusData?.data ?? EMPTY_ARRAY;
+
+ 
+  const [openCreate, setOpenCreate] = useState(false);
+  const handleAddStatusClick = () => setOpenCreate(true);
+
+
   const rows = data?.data?.docs ?? EMPTY_ARRAY;
   const total = data?.data?.total ?? 0;
+
+  const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
+    () => [
+      {
+        key: "company",
+        label: "Company",
+        render: (row) => (
+          <div className="flex items-start gap-2 flex-col">
+            <span className="font-medium">{row.company}</span>
+            {row.image && (
+              <span className="flex items-center justify-center w-20 max-h-9 rounded-md bg-white shrink-0 overflow-hidden">
+                <img
+                  src={row.image}
+                  alt={row.company}
+                  className=" object-contain"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.parentElement!.style.display = "none";
+                  }}
+                />
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "site_name",
+        label: "Source",
+        render: (row) => {
+          if (!row.url || !row.site_name) {
+            return "NA";
+          }
+          return (
+            <a
+              href={row.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-4 decoration-transparent transition-all duration-200 hover:underline hover:decoration-current"
+            >
+              {row.site_name}
+            </a>
+          );
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        center: true,
+        render: (row) => (
+          <Badge
+            variant="outline"
+            style={{
+              backgroundColor: `${row.status_result?.color}1a`,
+              borderColor: row.status_result?.color,
+            }}
+          >
+            {row.status_result?.name ?? "Applied"}
+          </Badge>
+        ),
+      },
+      {
+        key: "applied_on",
+        label: "Applied On",
+        render: (row) => formatDateTime(row.applied_on),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        center: true,
+        render: (row) => (
+          <div className="flex items-center justify-center gap-1">
+            <AppIconButton
+              icon={<Pencil className="h-4 w-4" />}
+              tooltip="Edit"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              href={`/job-tracker/edit/${row._id}`}
+            />
+            <AppIconButton
+              icon={<Trash2 className="h-4 w-4" />}
+              variant="ghost"
+              tooltip="Delete"
+              size="icon"
+              className="h-8 w-8 text-destructive"
+            />
+            <StatusMenu
+              id={row._id}
+              status={row.status}
+              statuses={statuses}
+              onAddStatus={handleAddStatusClick}
+            />
+          </div>
+        ),
+      },
+    ],
+    [statuses],
+  );
 
   return (
     <>
@@ -186,6 +200,8 @@ export default function JobTracker() {
         loading={isLoading}
         onPageChange={setPageInfo}
       />
+
+      <CreateStatus open={openCreate} onOpenChange={setOpenCreate} />
     </>
   );
 }

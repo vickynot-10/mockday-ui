@@ -1,4 +1,4 @@
-export  interface TrackerForm  {
+export interface TrackerForm {
   company: string;
   title: string;
   url: string;
@@ -6,8 +6,6 @@ export  interface TrackerForm  {
   page_title: string;
   h1: string;
   site_name: string;
-  notes: string;
-  reminder_date?: Date;
-  reminder_time: string;
-  reminder_note: string;
-};
+  status:string | null;
+  notes: string[];
+}
