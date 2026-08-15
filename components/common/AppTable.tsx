@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import {
   Table,
   TableBody,
@@ -17,13 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  ChevronsLeft,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Hash } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export type AppTableColumn<T> = {
   key: string;
@@ -67,14 +64,30 @@ export function AppTable<T extends Record<string, unknown>>({
   const startRow = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const endRow = Math.min(page * pageSize, totalCount);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(page.toString());
+
   const goToPage = (nextPage: number) => {
     const clamped = Math.min(Math.max(nextPage, 1), totalPages);
+    setInputValue(clamped.toString());
+    setIsEditing(false);
     if (clamped === page) return;
     onPageChange({ page: clamped, pageSize });
   };
 
   const changePageSize = (nextPageSize: number) => {
     onPageChange({ page: 1, pageSize: nextPageSize });
+  };
+
+  const handleInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = parseInt(inputValue);
+    if (!isNaN(parsed)) {
+      goToPage(parsed);
+    } else {
+      setInputValue(page.toString());
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -117,9 +130,7 @@ export function AppTable<T extends Record<string, unknown>>({
               </TableRow>
             ) : (
               data.map((row, rowIndex) => (
-                <TableRow
-                key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
-
+                <TableRow key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
                   {columns.map((column) => (
                     <TableCell
                       key={column.key}
@@ -142,8 +153,15 @@ export function AppTable<T extends Record<string, unknown>>({
       </div>
 
       <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Rows per page</span>
+        <div className="text-sm text-muted-foreground">
+          {totalCount > 0 && (
+            <span>
+              Showing {totalCount === 1 ? "1 entry" : `${totalCount} entries`}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2  flex-row">
           <Select
             value={String(pageSize)}
             onValueChange={(value) => changePageSize(Number(value))}
@@ -159,54 +177,80 @@ export function AppTable<T extends Record<string, unknown>>({
               ))}
             </SelectContent>
           </Select>
-        </div>
+          <div className="flex items-center gap-1 bg-background border rounded-xl p-1.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg hover:bg-secondary/80"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-        <div className="text-sm text-muted-foreground">
-          {totalCount === 0
-            ? "0 results"
-            : `${startRow}-${endRow} of ${totalCount}`}
-        </div>
+            <div className="flex items-center px-1 min-w-[110px] justify-center">
+              <AnimatePresence mode="wait">
+                {!isEditing ? (
+                  <motion.div
+                    key="viewer"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    onClick={() => {
+                      setInputValue(page.toString());
+                      setIsEditing(true);
+                    }}
+                    className="flex items-center gap-1.5 cursor-pointer hover:bg-secondary/50 px-3 py-1 rounded-md transition-colors group"
+                  >
+                    <span className="text-sm font-semibold tabular-nums">
+                      {page}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                      of {totalPages}
+                    </span>
+                    <Hash className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    key="editor"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onSubmit={handleInputSubmit}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Input
+                      autoFocus
+                      className="w-12 h-7 py-0 px-1 text-center text-xs tabular-nums focus-visible:ring-1"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onBlur={() => setIsEditing(false)}
+                      type="text"
+                      inputMode="numeric"
+                    />
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 px-2 text-[10px] font-bold uppercase tracking-tighter cursor-pointer"
+                    >
+                      GO
+                    </Button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
 
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={page <= 1}
-            onClick={() => goToPage(1)}
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={page <= 1}
-            onClick={() => goToPage(page - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="px-2 text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={page >= totalPages}
-            onClick={() => goToPage(page + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={page >= totalPages}
-            onClick={() => goToPage(totalPages)}
-          >
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg hover:bg-secondary/80"
+              disabled={page >= totalPages}
+              onClick={() => goToPage(page + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
