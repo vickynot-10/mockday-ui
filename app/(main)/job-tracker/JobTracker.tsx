@@ -6,8 +6,6 @@ import StatusMenu from "./components/StatusChange";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Pencil, Trash2 } from "lucide-react";
-import Tooltip from "@/components/common/ToolTip";
-import AppVariantButton from "@/components/common/AppVariantButton";
 import { formatDateTime } from "@/utils/formatDateTime";
 import {
   AppTable,
@@ -63,20 +61,6 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
       </div>
     ),
   },
-  // {
-  //   key: "title",
-  //   label: "Role",
-  //   render: (row) => (
-  //     <Link
-  //       href={row.url}
-  //       target="_blank"
-  //       rel="noopener noreferrer"
-  //       className="hover:underline"
-  //     >
-  //       {row.title || row.page_title}
-  //     </Link>
-  //   ),
-  // },
   {
     key: "site_name",
     label: "Source",
@@ -93,7 +77,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
           borderColor: row.status_result?.color,
         }}
       >
-        {row.status_result?.name}
+        {row.status_result?.name ?? "Applied"}
       </Badge>
     ),
   },
@@ -122,7 +106,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
           size="icon"
           className="h-8 w-8 text-destructive"
         />
-       <StatusMenu id={row._id} status={row.status} />
+        <StatusMenu id={row._id} status={row.status} />
       </div>
     ),
   },
@@ -165,11 +149,12 @@ export default function JobTracker() {
           />
         </div>
         <div>
-          <Tooltip content="Add a Tracker">
-            <AppVariantButton>
-              <Plus />
-            </AppVariantButton>
-          </Tooltip>
+          <AppIconButton
+            icon={<Plus className="h-4 w-4" />}
+            variant="default"
+            tooltip="Add"
+            size="icon"
+          />
         </div>
       </div>
 

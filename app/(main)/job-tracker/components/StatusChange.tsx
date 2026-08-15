@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import CreateStatus from "@/components/common/CreateStatus";
+import { useUpdateStatusTrackers } from "@/hooks/queries/useTrackers";
 import AppIconButton from "@/components/common/AppIconButton";
 import {
   DropdownMenu,
@@ -21,12 +22,13 @@ type EditProps = {
 export default function StatusMenu({ id, status }: EditProps) {
   const { data } = useGetAllStatus();
   const [openCreate, setOpenCreate] = useState(false);
-
   const statuses = data?.data ?? [];
-  const currentStatus = statuses.find((item: any) => item._id === status);
 
-  function handleSelect(item: any) {
-    console.log({ status_id: item._id, row_id: id });
+  const { mutate } = useUpdateStatusTrackers();
+
+  function handleSelect(status_id: string) {
+    if (!status_id || !id) return;
+    mutate({ status_id, tracker_id: id });
   }
 
   function handleAddStatusClick() {
@@ -36,44 +38,46 @@ export default function StatusMenu({ id, status }: EditProps) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger >
+        <DropdownMenuTrigger>
           <AppIconButton
-            icon={
-             <EllipsisVertical />
-            }
+            icon={<EllipsisVertical />}
             tooltip="Change Status"
             variant="ghost"
             size="icon"
             className="h-8 w-8"
           />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          {statuses.map((item: any) => (
+        <DropdownMenuContent align="end" className="w-48 p-0">
+          <div className="max-h-56 overflow-y-auto p-1">
+            {statuses.map((item: any) => (
+              <DropdownMenuItem
+                key={item._id}
+                onClick={() => handleSelect(item._id)}
+                className={cn(
+                  "flex items-center gap-2",
+                  item._id === status && "bg-accent/40",
+                )}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="truncate">{item.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </div>
+
+          <DropdownMenuSeparator className="mx-0" />
+
+          <div className="p-1">
             <DropdownMenuItem
-              key={item._id}
-              onClick={() => handleSelect(item)}
-              className={cn(
-                "flex items-center gap-2",
-                item._id === status && "bg-accent/40",
-              )}
+              onClick={handleAddStatusClick}
+              className="flex items-center gap-2 text-primary"
             >
-              <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="truncate">{item.name}</span>
+              <Plus className="w-3.5 h-3.5" />
+              Add Status
             </DropdownMenuItem>
-          ))}
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            onClick={handleAddStatusClick}
-            className="flex items-center gap-2 text-primary"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Status
-          </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
