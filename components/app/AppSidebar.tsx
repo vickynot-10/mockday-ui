@@ -15,6 +15,7 @@ import {
   Briefcase,
   Wand2,
   Tags,
+  Bell,
 } from "lucide-react";
 
 export const navData: NavItem[] = [
@@ -26,6 +27,7 @@ export const navData: NavItem[] = [
 
   { label: "Settings", isSection: true },
   { title: "Tracker Statuses", icon: Tags, href: "/tracker-status" },
+  { title: "Notifications", icon: Bell, href: "/notifications" },
 ];
 
 export default function AppSidebar() {
