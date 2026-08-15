@@ -52,6 +52,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
               src={row.image}
               alt={row.company}
               className=" object-contain"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.parentElement!.style.display = "none";
               }}

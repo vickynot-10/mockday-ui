@@ -28,6 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import { TrackerForm } from "@/types/tracker.types";
 import AppVariantButton from "@/components/common/AppVariantButton";
+import TrackerFormSkeleton from "@/loaders/tracker-form.loader";
+import { useRouter } from "next/navigation";
 
 const EMPTY_FORM: TrackerForm = {
   company: "",
@@ -61,7 +63,7 @@ type EditProps = {
 };
 
 export default function AddOrEditJobTracker({ id }: EditProps) {
-  const { data } = useGetTrackerByID(id);
+  const { data, isLoading } = useGetTrackerByID(id);
   const { mutate, isPending } = useSaveTracker();
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0].id);
@@ -83,11 +85,20 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
     });
   }, [data]);
 
+  const router = useRouter();
+
+  if (isLoading) {
+    return <TrackerFormSkeleton />;
+  }
+
   function onSubmit(values: TrackerForm) {
     const payload = id ? { ...values, _id: id } : values;
     mutate(payload);
   }
 
+  function GoBack() {
+    router.push("/job-tracker");
+  }
   function handleTabChange(newId: string) {
     const prevIdx = tabs.findIndex((t) => t.id === activeTab);
     const nextIdx = tabs.findIndex((t) => t.id === newId);
@@ -347,6 +358,7 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
             variant="outline"
             size="sm"
             className="min-w-44 h-[46px] rounded-xl"
+            onClick={GoBack}
           >
             Go Back
           </AppVariantButton>
