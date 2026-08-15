@@ -1,9 +1,8 @@
 "use client";
-
+import { useMe } from "@/hooks/useMe";
 import { useSignout } from "@/hooks/queries/useAuth";
-import { useRouter } from "next/navigation";
 import type { ReactElement } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,47 +12,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  LucideIcon,
-  CircleUserRound,
-  CreditCard,
-  ReceiptText,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { LucideIcon, LogOut } from "lucide-react";
 
 type Props = {
   trigger: ReactElement;
   defaultOpen?: boolean;
   align?: "start" | "center" | "end";
-};
-
-type MenuItem = {
-  label: string;
-  icon: LucideIcon;
-  destructive?: boolean;
-};
-
-const PROFILE_ITEMS: MenuItem[] = [
-  { label: "My Profile", icon: CircleUserRound },
-  { label: "My Subscription", icon: CreditCard },
-  { label: "My Invoice", icon: ReceiptText },
-];
-
-const SETTINGS_ITEMS: MenuItem[] = [
-  { label: "Account Settings", icon: Settings },
-];
-
-const LOGOUT_ITEM: MenuItem = {
-  label: "Signout",
-  icon: LogOut,
-  destructive: true,
+  name?: string;
+  email?: string;
+  onSignout?: () => void;
+  signingOut?: boolean;
 };
 
 const itemClass =
   "p-2 text-sm font-medium text-popover-foreground cursor-pointer gap-2";
 
-const Dropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
+function getInitials(name?: string) {
+  if (!name) return "";
+  const parts = name.trim().split(" ");
+  const first = parts[0]?.[0] ?? "";
+  const second = parts[1]?.[0] ?? "";
+  return (first + second).toUpperCase();
+}
+
+const Dropdown = ({
+  trigger,
+  defaultOpen,
+  align = "end",
+  name,
+  email,
+  onSignout,
+  signingOut,
+}: Props) => {
   return (
     <div className="flex items-start justify-center p-4 sm:p-8">
       <DropdownMenu defaultOpen={defaultOpen}>
@@ -66,53 +56,32 @@ const Dropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
           className="w-3xs rounded-2xl data-open:slide-in-from-bottom-20! data-closed:slide-out-to-bottom-20 data-open:fade-in-0 data-closed:fade-out-0 data-closed:zoom-out-100 duration-400"
         >
           <DropdownMenuGroup>
-            {/* User Info */}
             <DropdownMenuLabel className="flex items-center gap-3 px-4 py-3">
               <div className="relative">
                 <Avatar className="size-10">
-                  <AvatarFallback>DM</AvatarFallback>
+                  <AvatarFallback>{getInitials(name)}</AvatarFallback>
                 </Avatar>
                 <span className="ring-card absolute right-0 bottom-0 size-2 rounded-full bg-green-600 ring-2" />
               </div>
 
               <div className="flex flex-col">
                 <span className="text-popover-foreground text-sm font-medium">
-                  David McMichael
+                  {name}
                 </span>
-                <span className="text-muted-foreground text-sm">
-                  david@shadcnspace.com
-                </span>
+                <span className="text-muted-foreground text-sm">{email}</span>
               </div>
             </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
 
-            {/* Main Links */}
-            {PROFILE_ITEMS.map(({ label, icon: Icon }) => (
-              <DropdownMenuItem key={label} className={itemClass}>
-                <Icon size={20} />
-                <span>{label}</span>
-              </DropdownMenuItem>
-            ))}
-
-            <DropdownMenuSeparator />
-
-            {/* Settings */}
-            <DropdownMenuGroup>
-              {SETTINGS_ITEMS.map(({ label, icon: Icon }) => (
-                <DropdownMenuItem key={label} className={itemClass}>
-                  <Icon size={20} />
-                  <span>{label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            {/* Logout */}
-            <DropdownMenuItem variant="destructive" className={itemClass}>
-              <LOGOUT_ITEM.icon size={20} />
-              <span>{LOGOUT_ITEM.label}</span>
+            <DropdownMenuItem
+              variant="destructive"
+              className={itemClass}
+              disabled={signingOut}
+              onClick={onSignout}
+            >
+              <LogOut size={20} />
+              <span>{signingOut ? "Signing out..." : "Signout"}</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -122,17 +91,27 @@ const Dropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
 };
 
 const ProfileDropdown = () => {
+  const { data, isLoading } = useMe();
+  const { mutate: signout, isPending } = useSignout();
+  function handleSignout() {
+    signout();
+  }
+
+  const name = data?.name;
+  const email = data?.email;
+  const initials = getInitials(name);
+
   return (
     <Dropdown
       align="center"
+      name={isLoading ? "Loading..." : name}
+      email={isLoading ? "Loading..." : email}
+      onSignout={handleSignout}
+      signingOut={isPending}
       trigger={
         <div className="rounded-full">
           <Avatar className="size-10 cursor-pointer">
-            <AvatarImage
-              src="https://images.shadcnspace.com/assets/profiles/user-11.jpg"
-              alt="David McMichael"
-            />
-            <AvatarFallback>DM</AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </div>
       }

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SignUpFormValues } from "@/types/auth.types";
-import { useSignUp } from "@/hooks/queries/useClientAuth";
+import { useSignup } from "@/hooks/queries/useAuth";
 
 const fieldVariants: Variants = {
   hidden: { opacity: 0, y: 12 },
@@ -27,7 +27,7 @@ export default function SignUp() {
     formState: { errors },
   } = useForm<SignUpFormValues>();
   const [agreed, setAgreed] = useState<boolean>(false);
-  const { isPending, mutate } = useSignUp();
+  const { isPending, mutate } = useSignup();
 
   const onSubmit = (data: SignUpFormValues) => {
     if (!agreed) return;
