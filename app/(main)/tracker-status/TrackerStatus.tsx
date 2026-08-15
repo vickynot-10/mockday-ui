@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
+import StatusGridSkeleton from "@/loaders/status.loader";
 import {
   useGetStatus,
   useDeleteStatus,
@@ -21,6 +22,7 @@ import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
 import { cn } from "@/lib/utils";
 import CreateStatus from "@/components/common/CreateStatus";
+import { NoDataFound } from "@/components/common/AppTable";
 
 const items = [
   { label: "Settings", isSection: true },
@@ -30,7 +32,7 @@ const items = [
 export default function CustomizableStatus() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
-  const { data } = useGetStatus(search_term);
+  const { data, isLoading } = useGetStatus(search_term);
   const {
     mutate: deleteStatus,
     isPending: deleting,
@@ -47,6 +49,7 @@ export default function CustomizableStatus() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
+
   const statuses = data?.data ?? [];
 
   function openCreate() {
@@ -171,114 +174,116 @@ export default function CustomizableStatus() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <AnimatePresence initial={false}>
-          {statuses.map((status: any) => {
-            const isSelected = selectedIds.includes(status._id);
-            return (
-              <motion.div
-                key={status._id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                onClick={() => handleChipClick(status)}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors overflow-hidden",
-                  isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:bg-accent/50",
-                  isRowDeleting(status._id) && "opacity-50 pointer-events-none",
-                )}
-              >
-                <span
-                  className="absolute left-0 top-0 h-full w-1.5"
-                  style={{ backgroundColor: status.color }}
-                />
-                <span
-                  className="w-8 h-8 rounded-lg shrink-0 ml-1"
-                  style={{ backgroundColor: status.color }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-foreground truncate">
-                      {status.name}
-                    </span>
-                    {status.isDefault && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                        Default
+      {isLoading && <StatusGridSkeleton />}
+
+      {!isLoading && statuses.length <= 0 && <NoDataFound text="No Status Found" />}
+
+      {statuses && statuses.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <AnimatePresence initial={false}>
+            {statuses.map((status: any) => {
+              const isSelected = selectedIds.includes(status._id);
+              return (
+                <motion.div
+                  key={status._id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => handleChipClick(status)}
+                  className={cn(
+                    "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors overflow-hidden",
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-card hover:bg-accent/50",
+                    isRowDeleting(status._id) &&
+                      "opacity-50 pointer-events-none",
+                  )}
+                >
+                  <span
+                    className="absolute left-0 top-0 h-full w-1.5"
+                    style={{ backgroundColor: status.color }}
+                  />
+                  <span
+                    className="w-8 h-8 rounded-lg shrink-0 ml-1"
+                    style={{ backgroundColor: status.color }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {status.name}
                       </span>
-                    )}
+                      {status.isDefault && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground uppercase">
+                      {status.color}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground uppercase">
-                    {status.color}
-                  </span>
-                </div>
 
-                {!selectMode && (
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSetDefault(status._id);
-                      }}
-                      disabled={status.default || isSettingDefault(status._id)}
-                      className="p-1 rounded-full hover:bg-background disabled:opacity-40"
+                  {!selectMode && (
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetDefault(status._id);
+                        }}
+                        disabled={
+                          status.default || isSettingDefault(status._id)
+                        }
+                        className="p-1 rounded-full hover:bg-background disabled:opacity-40"
+                      >
+                        <Star
+                          className={cn(
+                            "w-3.5 h-3.5",
+                            status.default && "fill-current text-amber-500",
+                          )}
+                        />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(status);
+                        }}
+                        className="p-1 rounded-full hover:bg-background"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDeleteConfirm([status._id]);
+                        }}
+                        className="p-1 rounded-full hover:bg-background"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+
+                  {selectMode && (
+                    <div
+                      className={cn(
+                        "w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
+                        isSelected
+                          ? "bg-primary border-primary"
+                          : "border-border",
+                      )}
                     >
-                      <Star
-                        className={cn(
-                          "w-3.5 h-3.5",
-                          status.default && "fill-current text-amber-500",
-                        )}
-                      />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEdit(status);
-                      }}
-                      className="p-1 rounded-full hover:bg-background"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDeleteConfirm([status._id]);
-                      }}
-                      className="p-1 rounded-full hover:bg-background"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </button>
-                  </div>
-                )}
-
-                {selectMode && (
-                  <div
-                    className={cn(
-                      "w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
-                      isSelected
-                        ? "bg-primary border-primary"
-                        : "border-border",
-                    )}
-                  >
-                    {isSelected && (
-                      <X className="w-3 h-3 text-primary-foreground" />
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        {statuses.length === 0 && (
-          <p className="text-sm text-muted-foreground py-2">
-            No statuses found
-          </p>
-        )}
-      </div>
-
+                      {isSelected && (
+                        <X className="w-3 h-3 text-primary-foreground" />
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
       <Dialog
         open={confirmDeleteOpen}
         onOpenChange={(v) => !v && setConfirmDeleteOpen(false)}
