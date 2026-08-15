@@ -14,6 +14,7 @@ import {
 } from "@/components/common/AppTable";
 import { Badge } from "@/components/ui/badge";
 import AppIconButton from "@/components/common/AppIconButton";
+import Link from "next/link";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -41,29 +42,40 @@ type TrackerRow = {
 
 const trackerColumns: AppTableColumn<TrackerRow>[] = [
   {
-    key: "company",
-    label: "Company",
-    render: (row) => (
-      <div className="flex items-center flex-row">
-        {row.image && (
+  key: "company",
+  label: "Company",
+  render: (row) => (
+    <div className="flex items-start gap-2 flex-col">
+      <span className="font-medium">{row.company}</span>
+      {row.image && (
+        <span className="flex items-center justify-center w-20 max-h-9 rounded-md bg-white shrink-0 overflow-hidden">
           <img
             src={row.image}
             alt={row.company}
-            width={20}
-            height={20}
-            className="rounded object-cover"
+            className=" object-contain"
             onError={(e) => {
-              e.currentTarget.style.display = "none";
+              e.currentTarget.parentElement!.style.display = "none";
             }}
           />
-        )}
-        <span className="font-medium">{row.company}</span>
-      </div>
-    ),
-  },
+        </span>
+      )}
+      
+    </div>
+  ),
+},
   {
     key: "site_name",
     label: "Source",
+    render: (row) => (
+      <a
+        href={row.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline-offset-4 decoration-transparent transition-all duration-200 hover:underline hover:decoration-current"
+      >
+        {row.site_name}
+      </a>
+    ),
   },
   {
     key: "status",
