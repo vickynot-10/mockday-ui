@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Hash } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import TableSkeletonRows from "@/loaders/app_table.loader";
+import Image from "next/image";
 
 export type AppTableColumn<T> = {
   key: string;
@@ -111,25 +113,19 @@ export function AppTable<T extends Record<string, unknown>>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && <TableSkeletonRows columns={columns.length} rows={5} />}
+
+            {!loading && data.length <= 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  Loading...
+                <TableCell colSpan={columns.length} className="!border-0">
+                  <NoDataFound />
                 </TableCell>
               </TableRow>
-            ) : data.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            ) : (
+            )}
+
+            {!loading &&
+              data &&
+              data.length > 0 &&
               data.map((row, rowIndex) => (
                 <TableRow key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
                   {columns.map((column) => (
@@ -147,8 +143,7 @@ export function AppTable<T extends Record<string, unknown>>({
                     </TableCell>
                   ))}
                 </TableRow>
-              ))
-            )}
+              ))}
           </TableBody>
         </Table>
       </div>
@@ -254,6 +249,19 @@ export function AppTable<T extends Record<string, unknown>>({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function NoDataFound() {
+  return (
+    <div className="flex items-center justify-center w-full">
+      <Image
+        src="/icons/no_data_found.svg"
+        alt="No Data Found"
+        height={400}
+        width={400}
+      />
     </div>
   );
 }

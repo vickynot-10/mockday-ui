@@ -2,6 +2,7 @@ import { api } from "@/utils/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const QUERY_KEY = "customizable-status";
+const ALL_STATUS_QUERY_KEY = "get-all-status";
 
 export const useGetStatus = (search?: string) => {
   return useQuery({
@@ -25,6 +26,7 @@ export function useSaveStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [ALL_STATUS_QUERY_KEY] });
     },
   });
 }
@@ -40,6 +42,8 @@ export function useDeleteStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      
+      queryClient.invalidateQueries({ queryKey: [ALL_STATUS_QUERY_KEY] });
     },
   });
 }
@@ -56,3 +60,14 @@ export function useSetAsDefault() {
     },
   });
 }
+
+export const useGetAllStatus = () => {
+  return useQuery({
+    queryKey: [ALL_STATUS_QUERY_KEY],
+    queryFn: async () => {
+      const res = await api.get("/status/all",);
+      return res.data ?? null;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+};

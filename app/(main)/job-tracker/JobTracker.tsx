@@ -106,7 +106,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
     key: "actions",
     label: "Actions",
     center: true,
-    render: () => (
+    render: (row) => (
       <div className="flex items-center justify-center gap-1">
         <AppIconButton
           icon={<Pencil className="h-4 w-4" />}
@@ -115,7 +115,6 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
           size="icon"
           className="h-8 w-8"
         />
-
         <AppIconButton
           icon={<Trash2 className="h-4 w-4" />}
           variant="ghost"
@@ -123,6 +122,7 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
           size="icon"
           className="h-8 w-8 text-destructive"
         />
+       <StatusMenu id={row._id} status={row.status} />
       </div>
     ),
   },

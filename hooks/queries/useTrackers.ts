@@ -22,13 +22,4 @@ export const useGetTrackers = (params: TrackerParams) => {
   });
 };
 
-export const useGetAllStatus = () => {
-  return useQuery({
-    queryKey: ["get-all-status"],
-    queryFn: async () => {
-      const res = await api.get("/status/all",);
-      return res.data ?? null;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-};
+
