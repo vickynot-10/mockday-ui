@@ -87,8 +87,8 @@ export function AppTable<T extends Record<string, unknown>>({
                 <TableHead
                   key={column.key}
                   className={cn(
-                    "text-muted-foreground",
-                    column.center && "text-center"
+                    "text-muted-foreground  py-3 px-5",
+                    column.center && "text-center",
                   )}
                 >
                   {column.label}
@@ -117,13 +117,16 @@ export function AppTable<T extends Record<string, unknown>>({
               </TableRow>
             ) : (
               data.map((row, rowIndex) => (
-                <TableRow key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
+                <TableRow
+                key={rowKey ? rowKey(row, rowIndex) : rowIndex}>
+
                   {columns.map((column) => (
                     <TableCell
                       key={column.key}
                       className={cn(
+                        "py-5 px-5  !border-0",
                         column.center && "text-center",
-                        column.className
+                        column.className,
                       )}
                     >
                       {column.render

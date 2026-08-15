@@ -4,7 +4,7 @@ import useDebounce from "@/hooks/app/useDebounce";
 import { useGetTrackers } from "@/hooks/queries/useTrackers";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import Tooltip from "@/components/common/ToolTip";
 import AppVariantButton from "@/components/common/AppVariantButton";
 
@@ -15,10 +15,17 @@ import {
 } from "@/components/common/AppTable";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
+
+type TrackerStatus = {
+  _id: string;
+  name: string;
+  color: string;
+};
 
 type TrackerRow = {
   _id: string;
@@ -32,6 +39,7 @@ type TrackerRow = {
   title: string;
   applied_on: string;
   status: string;
+  status_result: TrackerStatus;
 };
 
 const trackerColumns: AppTableColumn<TrackerRow>[] = [
@@ -39,8 +47,8 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
     key: "company",
     label: "Company",
     render: (row) => (
-      <div className="flex items-center gap-2">
-        {row.image ? (
+      <div className="flex items-center flex-row">
+        {row.image && (
           <img
             src={row.image}
             alt={row.company}
@@ -48,28 +56,30 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
             height={20}
             className="rounded object-cover"
             onError={(e) => {
+              console.log(row.image)
+              console.log(e ,"on eroro")
               e.currentTarget.style.display = "none";
             }}
           />
-        ) : null}
+        )}
         <span className="font-medium">{row.company}</span>
       </div>
     ),
   },
-  {
-    key: "title",
-    label: "Role",
-    render: (row) => (
-      <Link
-        href={row.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:underline"
-      >
-        {row.title || row.page_title}
-      </Link>
-    ),
-  },
+  // {
+  //   key: "title",
+  //   label: "Role",
+  //   render: (row) => (
+  //     <Link
+  //       href={row.url}
+  //       target="_blank"
+  //       rel="noopener noreferrer"
+  //       className="hover:underline"
+  //     >
+  //       {row.title || row.page_title}
+  //     </Link>
+  //   ),
+  // },
   {
     key: "site_name",
     label: "Source",
@@ -78,12 +88,38 @@ const trackerColumns: AppTableColumn<TrackerRow>[] = [
     key: "status",
     label: "Status",
     center: true,
-    render: (row) => <Badge variant="secondary">{row.status}</Badge>,
+    render: (row) => (
+      <Badge
+        variant="outline"
+        style={{
+          backgroundColor: `${row.status_result?.color}1a`,
+          borderColor: row.status_result?.color,
+          color: row.status_result?.color,
+        }}
+      >
+        {row.status_result?.name}
+      </Badge>
+    ),
   },
   {
     key: "applied_on",
     label: "Applied On",
     render: (row) => new Date(row.applied_on).toLocaleDateString(),
+  },
+  {
+    key: "actions",
+    label: "Actions",
+    center: true,
+    render: () => (
+      <div className="flex items-center justify-center gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    ),
   },
 ];
 
