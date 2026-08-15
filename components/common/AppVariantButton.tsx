@@ -22,7 +22,7 @@ export default function AppVariantButton({
 }: ButtonProps) {
   const isCustom = variant === "danger" || variant === "success";
 
-  const class_var = `group-hover:-translate-y-1 transition-transform duration-200 ${
+  const class_var = ` ${
     variant === "danger"
       ? "bg-red-500 hover:bg-red-500/80 text-white"
       : variant === "success"
