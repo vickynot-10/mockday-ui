@@ -79,6 +79,26 @@ export const useUpdateStatusTrackers = () => {
   });
 };
 
+
+
+export const useDeleteTrackers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await api.delete("/trackers", {
+        data : data
+      });
+      return res.data ?? null;
+    },
+    onSuccess: (res: any) => {
+      if (res.success) {
+        toast.success(res.msg || "Deleted Successfully !");
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      }
+    },
+  });
+};
+
 export const useRemindersTrackers = (tracker_id?: string, open?: boolean) => {
   return useQuery({
     queryKey: ["reminders-tracker", tracker_id],

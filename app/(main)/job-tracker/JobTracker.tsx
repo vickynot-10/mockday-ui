@@ -14,8 +14,18 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import AppVariantButton from "@/components/common/AppVariantButton";
+import {
   useGetTrackers,
   useUpdateStatusTrackers,
+  useDeleteTrackers,
 } from "@/hooks/queries/useTrackers";
 import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import { useMemo, useState } from "react";
@@ -68,11 +78,32 @@ export default function JobTracker() {
   const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(
     null,
   );
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+
   const { mutate } = useUpdateStatusTrackers();
+  const { mutate: deleteTrackers, isPending: deleting } = useDeleteTrackers();
 
   function handleSelect(status_id: string | null, tracker_id: string) {
     if (!tracker_id) return;
     mutate({ status_id, tracker_id: tracker_id });
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function confirmDelete() {
+    deleteTrackers(deleteTargetIds, {
+      onSuccess: () => {
+        setSelectedIds((prev) =>
+          prev.filter((id) => !deleteTargetIds.includes(id)),
+        );
+        setDeleteTargetIds([]);
+      },
+    });
   }
 
   const [pageInfo, setPageInfo] = useState<AppTablePageInfo>({
@@ -131,6 +162,17 @@ export default function JobTracker() {
 
   const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
     () => [
+      {
+        key: "select",
+        label: "",
+        center: true,
+        render: (row) => (
+          <Checkbox
+            checked={selectedIds.includes(row._id)}
+            onCheckedChange={() => toggleSelect(row._id)}
+          />
+        ),
+      },
       {
         key: "company",
         label: "Company",
@@ -223,6 +265,7 @@ export default function JobTracker() {
               tooltip="Delete"
               size="icon"
               className="h-8 w-8 text-destructive"
+              onClick={() => setDeleteTargetIds([row._id])}
             />
 
             <DropdownMenu>
@@ -282,7 +325,7 @@ export default function JobTracker() {
         ),
       },
     ],
-    [statuses],
+    [statuses, selectedIds, status],
   );
 
   return (
@@ -315,7 +358,7 @@ export default function JobTracker() {
 
       <Separator />
 
-      <div className=" flex flex-row my-4 gap-3">
+      <div className=" flex flex-row items-center my-4 gap-3">
         <AppIconButton
           icon={<ArrowUpDown className="h-4 w-4" />}
           variant="outline"
@@ -334,6 +377,18 @@ export default function JobTracker() {
           searchable={true}
           showCounts={false}
         />
+
+        {selectedIds.length > 0 && (
+          <AppVariantButton
+            variant="danger"
+            size="sm"
+            className="flex flex-row items-center gap-2"
+            onClick={() => setDeleteTargetIds(selectedIds)}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete {selectedIds.length} selected
+          </AppVariantButton>
+        )}
       </div>
 
       <AppTable
@@ -356,6 +411,46 @@ export default function JobTracker() {
           onOpenChange={setOpenReminders}
         />
       )}
+
+      <Dialog
+        open={deleteTargetIds.length > 0}
+        onOpenChange={(v) => !v && setDeleteTargetIds([])}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              Delete{" "}
+              {deleteTargetIds.length > 1
+                ? `${deleteTargetIds.length} trackers`
+                : "tracker"}
+              ?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This can't be undone. The selected tracker
+            {deleteTargetIds.length > 1 ? "s" : ""} will be permanently removed.
+          </p>
+          <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
+            <AppVariantButton
+              variant="default"
+              size="sm"
+              onClick={() => setDeleteTargetIds([])}
+              disabled={deleting}
+            >
+              Cancel
+            </AppVariantButton>
+            <AppVariantButton
+              variant="danger"
+              size="sm"
+              onClick={confirmDelete}
+              disabled={deleting}
+              isLoading={deleting}
+            >
+              Delete
+            </AppVariantButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
