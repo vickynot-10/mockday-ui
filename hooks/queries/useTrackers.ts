@@ -11,6 +11,9 @@ type TrackerParams = {
   sort: string;
   limit: number;
   search?: string;
+  status?:any;
+  from? :string;
+  to?:string;
 };
 
 type StatusParams = {

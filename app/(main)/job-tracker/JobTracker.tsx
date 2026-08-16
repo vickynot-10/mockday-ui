@@ -1,6 +1,14 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import useDebounce from "@/hooks/app/useDebounce";
+
+import { FilterBar } from "@/components/godui/filter-bar";
+import AppliedDateFilter from "@/components/common/DatePicker";
+import { useTrackerFilters } from "@/hooks/filters/useTrackerFilters";
+import { ArrowUpDown } from "lucide-react";
+
+import { Separator } from "@/components/ui/separator";
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -70,17 +78,43 @@ export default function JobTracker() {
     page: 1,
     pageSize: 25,
   });
-  const [sort, setSort] = useState<"1" | "-1">("-1");
+
+  const {
+    filters,
+    setFilters,
+    dateRange,
+    setDateRange,
+    status,
+    from,
+    to,
+    sort,
+    toggleSort,
+  } = useTrackerFilters();
 
   const { data, isLoading } = useGetTrackers({
     page: pageInfo.page,
     limit: pageInfo.pageSize,
     sort,
     search: search_term,
+    status,
+    from,
+    to,
   });
 
   const { data: statusData } = useGetAllStatus();
+
   const statuses: TrackerStatus[] = statusData?.data ?? EMPTY_ARRAY;
+
+  const facets = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "Status",
+        options: statuses.map((s) => ({ label: s.name, value: s._id })),
+      },
+    ],
+    [statuses],
+  );
 
   const rows = data?.data?.docs ?? EMPTY_ARRAY;
   const total = data?.data?.total ?? 0;
@@ -261,6 +295,29 @@ export default function JobTracker() {
             href={`/job-tracker/add`}
           />
         </div>
+      </div>
+
+      <Separator />
+
+      <div className=" flex flex-row my-4 gap-3">
+        <AppIconButton
+          icon={<ArrowUpDown className="h-4 w-4" />}
+          variant="outline"
+          tooltip={sort === "-1" ? "Newest first" : "Oldest first"}
+          size="icon"
+          className="h-9 w-9"
+          onClick={toggleSort}
+        />
+
+        <AppliedDateFilter value={dateRange} onApply={setDateRange} />
+
+        <FilterBar
+          facets={facets}
+          value={filters}
+          onChange={setFilters}
+          searchable={true}
+          showCounts={false}
+        />
       </div>
 
       <AppTable
