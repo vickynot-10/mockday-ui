@@ -1,14 +1,11 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import useDebounce from "@/hooks/app/useDebounce";
-
 import { FilterBar } from "@/components/godui/filter-bar";
 import AppliedDateFilter from "@/components/common/DatePicker";
 import { useTrackerFilters } from "@/hooks/filters/useTrackerFilters";
-import { ArrowUpDown } from "lucide-react";
-
+import { ArrowUpDown, BellPlus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -41,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import AppIconButton from "@/components/common/AppIconButton";
 import { cn } from "@/lib/utils";
 import CreateStatus from "@/components/common/CreateStatus";
+import AddReminder from "./components/AddReminder";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -66,7 +64,10 @@ export default function JobTracker() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
   const [openModal, setOpenModal] = useState<boolean>(false);
-
+  const [openReminders, setOpenReminders] = useState<boolean>(false);
+  const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(
+    null,
+  );
   const { mutate } = useUpdateStatusTrackers();
 
   function handleSelect(status_id: string | null, tracker_id: string) {
@@ -121,6 +122,11 @@ export default function JobTracker() {
 
   function OpenStatus() {
     setOpenModal(true);
+  }
+
+  function OpenReminders(tracker_id: string) {
+    setReminderTrackerId(tracker_id);
+    setOpenReminders(true);
   }
 
   const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
@@ -201,6 +207,16 @@ export default function JobTracker() {
               className="h-8 w-8"
               href={`/job-tracker/edit/${row._id}`}
             />
+
+            <AppIconButton
+              icon={<BellPlus className="h-4 w-4" />}
+              tooltip="Add Reminders"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => OpenReminders(row._id)}
+            />
+
             <AppIconButton
               icon={<Trash2 className="h-4 w-4" />}
               variant="ghost"
@@ -332,6 +348,14 @@ export default function JobTracker() {
       />
 
       <CreateStatus open={openModal} onOpenChange={setOpenModal} />
+
+      {reminderTrackerId && (
+        <AddReminder
+          trackerId={reminderTrackerId}
+          open={openReminders}
+          onOpenChange={setOpenReminders}
+        />
+      )}
     </>
   );
 }

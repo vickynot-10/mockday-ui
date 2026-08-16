@@ -11,9 +11,9 @@ type TrackerParams = {
   sort: string;
   limit: number;
   search?: string;
-  status?:any;
-  from? :string;
-  to?:string;
+  status?: any;
+  from?: string;
+  to?: string;
 };
 
 type StatusParams = {
@@ -74,6 +74,39 @@ export const useUpdateStatusTrackers = () => {
       if (res.success) {
         toast.success(res.msg || "Status Updated Successfully !");
         queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      }
+    },
+  });
+};
+
+export const useRemindersTrackers = (tracker_id?: string) => {
+  return useQuery({
+    queryKey: ["reminders-tracker", tracker_id],
+
+    queryFn: async () => {
+      const res = await api.get("/trackers/reminders", {
+        params: {id: tracker_id },
+      });
+
+      return res.data ?? null;
+    },
+
+    enabled: !!tracker_id,
+    staleTime : 0
+  });
+};
+
+
+export const useSaveRemindersTrackers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await api.post("/trackers/reminders", data);
+      return res.data ?? null;
+    },
+    onSuccess: (res: any) => {
+      if (res.success) {
+        toast.success(res.msg || "Status Updated Successfully !");
       }
     },
   });
