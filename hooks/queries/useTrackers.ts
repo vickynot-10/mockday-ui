@@ -79,23 +79,17 @@ export const useUpdateStatusTrackers = () => {
   });
 };
 
-export const useRemindersTrackers = (tracker_id?: string) => {
+export const useRemindersTrackers = (tracker_id?: string, open?: boolean) => {
   return useQuery({
     queryKey: ["reminders-tracker", tracker_id],
-
     queryFn: async () => {
-      const res = await api.get("/trackers/reminders", {
-        params: {id: tracker_id },
-      });
-
+      const res = await api.get("/trackers/reminders", { params: { id: tracker_id } });
       return res.data ?? null;
     },
-
-    enabled: !!tracker_id,
-    staleTime : 0
+    enabled: open && !!tracker_id,
+    staleTime: 0,
   });
 };
-
 
 export const useSaveRemindersTrackers = () => {
   return useMutation({
@@ -111,12 +105,11 @@ export const useSaveRemindersTrackers = () => {
   });
 };
 
-
 export const useRemoveRemindersTrackers = () => {
   return useMutation({
-    mutationFn: async (tracker_id : string) => {
+    mutationFn: async (tracker_id: string) => {
       const res = await api.delete("/trackers/reminders", {
-        data : tracker_id
+        data: tracker_id,
       });
       return res.data ?? null;
     },

@@ -74,8 +74,26 @@ export default function AddReminder({
 }: AddReminderProps) {
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [isDataFOund, setDataFound] = useState(false);
-  const { data, isLoading } = useRemindersTrackers(trackerId);
+const { data, isLoading, refetch, isFetching } = useRemindersTrackers(trackerId);
 
+useEffect(() => {
+  if (!open) {
+    setDataFound(false);
+    reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
+    return;
+  }
+
+  setDataFound(false);
+  reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
+
+  refetch().then((result) => {
+    const res = result.data;
+    if (res?.success && res?.data) {
+      setDataFound(true);
+      reset(res.data);
+    }
+  });
+}, [open]);
   const { mutate, isPending } = useSaveRemindersTrackers();
   const { mutate: remove, isPending: removing } = useRemoveRemindersTrackers();
 
@@ -175,9 +193,9 @@ export default function AddReminder({
             )}
           </DialogTitle>
         </DialogHeader>
-        {isLoading && <ReminderFormSkeleton />}
+        {isFetching && <ReminderFormSkeleton />}
 
-        {!isLoading && (
+        {!isFetching && (
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-4"
