@@ -3,6 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const QUERY_KEY = "notifications";
 
+
+export const useGetUserNotifications = () => {
+  return useQuery({
+    queryKey: [QUERY_KEY , "all"],
+    queryFn: async () => {
+      const res = await api.get("/notifications/all");
+      return res.data ?? null;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+
 export const useGetNotifications = () => {
   return useQuery({
     queryKey: [QUERY_KEY],

@@ -96,16 +96,17 @@ export default function JobTracker() {
   }
 
   function toggleSelectAll() {
-  const pageIds = rows.map((r: TrackerRow) => r._id);
-  const allSelected =
-    pageIds.length > 0 && pageIds.every((id :any) => selectedIds.includes(id));
+    const pageIds = rows.map((r: TrackerRow) => r._id);
+    const allSelected =
+      pageIds.length > 0 &&
+      pageIds.every((id: any) => selectedIds.includes(id));
 
-  setSelectedIds((prev) =>
-    allSelected
-      ? prev.filter((id) => !pageIds.includes(id))
-      : [...new Set([...prev, ...pageIds])],
-  );
-}
+    setSelectedIds((prev) =>
+      allSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])],
+    );
+  }
 
   function confirmDelete() {
     deleteTrackers(deleteTargetIds, {
@@ -174,25 +175,25 @@ export default function JobTracker() {
 
   const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
     () => [
-    {
-  key: "select",
-  label: (
-    <Checkbox
-      checked={
-        rows.length > 0 &&
-        rows.every((r: TrackerRow) => selectedIds.includes(r._id))
-      }
-      onCheckedChange={toggleSelectAll}
-    />
-  ),
-  center: true,
-  render: (row) => (
-    <Checkbox
-      checked={selectedIds.includes(row._id)}
-      onCheckedChange={() => toggleSelect(row._id)}
-    />
-  ),
-},
+      {
+        key: "select",
+        label: (
+          <Checkbox
+            checked={
+              rows.length > 0 &&
+              rows.every((r: TrackerRow) => selectedIds.includes(r._id))
+            }
+            onCheckedChange={toggleSelectAll}
+          />
+        ),
+        center: true,
+        render: (row) => (
+          <Checkbox
+            checked={selectedIds.includes(row._id)}
+            onCheckedChange={() => toggleSelect(row._id)}
+          />
+        ),
+      },
       {
         key: "company",
         label: "Company",
