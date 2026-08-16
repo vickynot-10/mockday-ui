@@ -1,143 +1,155 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import {
   useGetNotifications,
   useSaveNotifications,
-  useSendEmailOtp,
-  useVerifyEmailOtp,
   useRegisterPush,
 } from "@/hooks/queries/useNotiications";
-import { useEffect, useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { waitForOneSignal } from "@/lib/onesignal";
 import { Switch } from "@/components/ui/switch";
 import { useMe } from "@/hooks/useMe";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Mail, Bell, Smartphone } from "lucide-react";
+import { Mail, Bell, Smartphone, Check } from "lucide-react";
 import { AppButton } from "@/components/common/AppButton";
 import { toast } from "sonner";
+import SendOtpStep from "./components/SendOTP";
+import VerifyOtpStep from "./components/VerifyOTP";
 
 const items = [
   { label: "Settings", isSection: true },
   { label: "Notifications" },
 ];
 
+const otpSteps = [
+  { key: "enter_email", label: "Email" },
+  { key: "enter_otp", label: "Verify" },
+] as const;
+
+type NotificationFormValues = {
+  email: boolean;
+  push: boolean;
+  notify_email: string;
+  push_registered: boolean;
+};
+
 export default function Notifications() {
   const { data } = useGetNotifications();
   const { data: userData } = useMe();
 
   const { mutate: saveNotifications, isPending } = useSaveNotifications();
-  const { mutate: sendOtp, isPending: sendingOtp } = useSendEmailOtp();
-  const { mutate: verifyOtp, isPending: verifyingOtp } = useVerifyEmailOtp();
   const { mutate: registerPush, isPending: registeringPush } =
     useRegisterPush();
 
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [emailMode, setEmailMode] = useState<"account" | "custom">("account");
-  const [verifiedEmail, setVerifiedEmail] = useState("");
-  const [pushRegistered, setPushRegistered] = useState(false);
+  const { control, handleSubmit, setValue, reset } =
+    useForm<NotificationFormValues>({
+      defaultValues: {
+        email: true,
+        push: false,
+        notify_email: "",
+        push_registered: false,
+      },
+    });
+
+  const emailEnabled = useWatch({ control, name: "email" });
+  const pushEnabled = useWatch({ control, name: "push" });
+  const notifyEmail = useWatch({ control, name: "notify_email" });
+  const pushRegistered = useWatch({ control, name: "push_registered" });
 
   const [otpDialogOpen, setOtpDialogOpen] = useState(false);
   const [otpStep, setOtpStep] = useState<"enter_email" | "enter_otp">(
     "enter_email",
   );
-  const [customEmail, setCustomEmail] = useState("");
-  const [otpValue, setOtpValue] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
 
   useEffect(() => {
     if (!data?.data) return;
-    setEmailEnabled(data.data.email ?? true);
-    setPushEnabled(data.data.push ?? false);
-    setPushRegistered(data.data.push_registered ?? false);
-    if (data.data.notify_email && data.data.notify_email !== userData?.email) {
-      setEmailMode("custom");
-      setVerifiedEmail(data.data.notify_email);
-    }
-  }, [data, userData]);
+    reset({
+      email: data.data.email ?? true,
+      push: data.data.push ?? false,
+      notify_email: data.data.notify_email || userData?.email || "",
+      push_registered: data.data.push_registered ?? false,
+    });
+  }, [data, userData, reset]);
+
+  const isCustomEmail = !!notifyEmail && notifyEmail !== userData?.email;
 
   function openOtpDialog() {
     setOtpStep("enter_email");
-    setCustomEmail("");
-    setOtpValue("");
+    setOtpEmail("");
     setOtpDialogOpen(true);
   }
 
-  function handleSendOtp() {
-    sendOtp(
-      { email: customEmail },
+  function handleDialogOpenChange(
+    next_open: boolean,
+    eventDetails: { reason?: string },
+  ) {
+    if (eventDetails.reason === "outside-press") return;
+    setOtpDialogOpen(next_open);
+  }
+
+  function handleOtpSent(email: string) {
+    setOtpEmail(email);
+    setOtpStep("enter_otp");
+  }
+
+  function handleOtpVerified(email: string) {
+    setValue("notify_email", email, { shouldDirty: true });
+    setOtpDialogOpen(false);
+  }
+
+  async function handleRegisterDevice() {
+    if (!userData?.user_id) return;
+
+    try {
+      await waitForOneSignal(process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!);
+    } catch (err) {
+      console.error("OneSignal init failed:", err);
+      toast.error("Notifications aren't ready yet. Try again in a moment.");
+      return;
+    }
+
+    const OneSignal = window.OneSignal;
+    await OneSignal.login(userData.user_id);
+    const permission = await OneSignal.Notifications.requestPermission();
+    if (!permission) {
+      toast.error(
+        "Notifications blocked. Enable them in your browser settings to continue.",
+      );
+      return;
+    }
+
+    registerPush(
+      { push_registered: true },
       {
         onSuccess: () => {
-          setOtpStep("enter_otp");
+          setValue("push_registered", true);
+          toast.success("This device is now registered for push notifications");
+        },
+        onError: () => {
+          toast.error("Failed to register this device. Try again.");
         },
       },
     );
   }
 
-  function handleVerifyOtp() {
-    verifyOtp(
-      { email: customEmail, otp: otpValue },
-      {
-        onSuccess: () => {
-          setVerifiedEmail(customEmail);
-          setEmailMode("custom");
-          setOtpDialogOpen(false);
-        },
-      },
-    );
-  }
-
-async function handleRegisterDevice() {
- if (!userData?.user_id) return;
-
-  try {
-    await waitForOneSignal(process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!);
-  } catch (err) {
-    console.error("OneSignal init failed:", err);
-    toast.error("Notifications aren't ready yet. Try again in a moment.");
-    return;
-  }
-
-  const OneSignal = window.OneSignal;
-  await OneSignal.login(userData.user_id);
-  const permission = await OneSignal.Notifications.requestPermission();
-  if (!permission) {
-    toast.error(
-      "Notifications blocked. Enable them in your browser settings to continue.",
-    );
-    return;
-  }
-
-  registerPush(
-    { push_registered: true },
-    {
-      onSuccess: () => {
-        setPushRegistered(true);
-        toast.success("This device is now registered for push notifications");
-      },
-      onError: () => {
-        toast.error("Failed to register this device. Try again.");
-      },
-    },
-  );
-}
-
-  function handleSave() {
+  const onSave = handleSubmit((values) => {
     saveNotifications({
-      email: emailEnabled,
-      push: pushEnabled,
-      notify_email:
-        emailMode === "custom" ? verifiedEmail : (userData?.email ?? ""),
+      email: values.email,
+      push: values.push,
+      notify_email: values.notify_email,
     });
-  }
+  });
+
+  const activeStepIndex = otpSteps.findIndex((s) => s.key === otpStep);
 
   return (
     <>
@@ -166,10 +178,16 @@ async function handleRegisterDevice() {
                 </p>
               </div>
             </div>
-            <Switch
-              id="email-toggle"
-              checked={emailEnabled}
-              onCheckedChange={setEmailEnabled}
+            <Controller
+              control={control}
+              name="email"
+              render={({ field }) => (
+                <Switch
+                  id="email-toggle"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
             />
           </div>
 
@@ -178,20 +196,22 @@ async function handleRegisterDevice() {
               <Button
                 type="button"
                 size="sm"
-                variant={emailMode === "account" ? "default" : "outline"}
-                onClick={() => setEmailMode("account")}
+                variant={!isCustomEmail ? "default" : "outline"}
+                onClick={() =>
+                  setValue("notify_email", userData?.email ?? "", {
+                    shouldDirty: true,
+                  })
+                }
               >
                 Use {userData?.email}
               </Button>
               <Button
                 type="button"
                 size="sm"
-                variant={emailMode === "custom" ? "default" : "outline"}
+                variant={isCustomEmail ? "default" : "outline"}
                 onClick={openOtpDialog}
               >
-                {emailMode === "custom" && verifiedEmail
-                  ? verifiedEmail
-                  : "Use a different email"}
+                {isCustomEmail ? notifyEmail : "Use a different email"}
               </Button>
             </div>
           )}
@@ -212,10 +232,16 @@ async function handleRegisterDevice() {
                 </p>
               </div>
             </div>
-            <Switch
-              id="push-toggle"
-              checked={pushEnabled}
-              onCheckedChange={setPushEnabled}
+            <Controller
+              control={control}
+              name="push"
+              render={({ field }) => (
+                <Switch
+                  id="push-toggle"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
             />
           </div>
 
@@ -240,7 +266,7 @@ async function handleRegisterDevice() {
         <div className="flex justify-end">
           <AppButton
             type="button"
-            onClick={handleSave}
+            onClick={onSave}
             isLoading={isPending}
             idleLabel="Save Changes"
             loadingLabel="Saving..."
@@ -249,88 +275,65 @@ async function handleRegisterDevice() {
         </div>
       </div>
 
-      <Dialog open={otpDialogOpen} onOpenChange={setOtpDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+      <Dialog open={otpDialogOpen} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Verify a different email</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="flex flex-1 items-center gap-2">
+                Verify a different email
+              </span>
+            </DialogTitle>
           </DialogHeader>
 
+          <div className="flex items-center gap-2 px-1 pb-1">
+            {otpSteps.map((step, idx) => {
+              const isCompleted = idx < activeStepIndex;
+              const isActive = idx === activeStepIndex;
+              return (
+                <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 transition-colors ${
+                        isCompleted || isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {isCompleted ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                    </div>
+                    <span
+                      className={`text-xs font-medium ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                  {idx < otpSteps.length - 1 && (
+                    <div
+                      className={`h-px flex-1 mx-3 ${
+                        isCompleted ? "bg-primary" : "bg-border"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           {otpStep === "enter_email" && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label
-                  htmlFor="custom_email"
-                  className="text-xs text-muted-foreground"
-                >
-                  Email
-                </Label>
-                <Input
-                  id="custom_email"
-                  type="email"
-                  value={customEmail}
-                  onChange={(e) => setCustomEmail(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOtpDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <AppButton
-                  type="button"
-                  onClick={handleSendOtp}
-                  isLoading={sendingOtp}
-                  idleLabel="Send OTP"
-                  loadingLabel="Sending..."
-                  successLabel="Sent"
-                  disabled={!customEmail}
-                />
-              </DialogFooter>
-            </div>
+            <SendOtpStep
+              onCancel={() => setOtpDialogOpen(false)}
+              onSent={handleOtpSent}
+            />
           )}
 
           {otpStep === "enter_otp" && (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs text-muted-foreground">
-                Enter the code sent to {customEmail}
-              </p>
-              <div className="flex flex-col gap-1.5">
-                <Label
-                  htmlFor="otp_code"
-                  className="text-xs text-muted-foreground"
-                >
-                  OTP
-                </Label>
-                <Input
-                  id="otp_code"
-                  value={otpValue}
-                  onChange={(e) => setOtpValue(e.target.value)}
-                  placeholder="123456"
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOtpStep("enter_email")}
-                >
-                  Back
-                </Button>
-                <AppButton
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  isLoading={verifyingOtp}
-                  idleLabel="Verify"
-                  loadingLabel="Verifying..."
-                  successLabel="Verified"
-                  disabled={!otpValue}
-                />
-              </DialogFooter>
-            </div>
+            <VerifyOtpStep
+              email={otpEmail}
+              onBack={() => setOtpStep("enter_email")}
+              onVerified={handleOtpVerified}
+            />
           )}
         </DialogContent>
       </Dialog>
