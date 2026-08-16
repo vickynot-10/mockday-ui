@@ -27,25 +27,27 @@ export function useSaveNotifications() {
   });
 }
 
-
+export function useRegisterPush() {
+  return useMutation({
+    mutationFn: (payload: { push_registered: boolean }) =>
+      api.post("/notifications/register-device", payload),
+  });
+}
 
 export function useSendEmailOtp() {
   return useMutation({
-    mutationFn: (payload: { email: string }) =>
-      api.post("/notifications/send-otp", payload),
+    mutationFn: async (payload: { email: string }) => {
+      const res = await api.post("/notifications/send-otp", payload);
+      return res.data;
+    },
   });
 }
 
 export function useVerifyEmailOtp() {
   return useMutation({
-    mutationFn: (payload: { email: string; otp: string }) =>
-      api.post("/notifications/verify-otp", payload),
-  });
-}
-
-export function useRegisterPush() {
-  return useMutation({
-    mutationFn: (payload: { push_registered: boolean }) =>
-      api.post("/notifications/register-device", payload),
+    mutationFn: async (payload: { email: string; otp: string }) => {
+      const res = await api.post("/notifications/verify-otp", payload);
+      return res.data;
+    },
   });
 }
