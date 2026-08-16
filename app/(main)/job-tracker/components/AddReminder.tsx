@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { format } from "date-fns";
-import { Bell, CalendarIcon, ChevronDown, Clock } from "lucide-react";
+import { Bell, CalendarIcon, ChevronDown, Clock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppButton } from "@/components/common/AppButton";
 import { Calendar } from "@/components/ui/calendar";
+import Tooltip from "@/components/common/ToolTip";
 import {
   Popover,
   PopoverTrigger,
@@ -59,7 +60,7 @@ function ReminderFormSkeleton() {
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Skeleton className="h-10 w-20" />
+        <Skeleton className="h-10 w-24" />
         <Skeleton className="h-10 w-24" />
       </div>
     </div>
@@ -102,6 +103,12 @@ export default function AddReminder({
     reset(data.data);
   }, [data]);
 
+  useEffect(() => {
+    if (open) return;
+    setDataFound(false);
+    reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
+  }, [open]);
+
   const minTime =
     new Date().toDateString() === today.toDateString()
       ? format(new Date(), "HH:mm")
@@ -116,7 +123,6 @@ export default function AddReminder({
   }
 
   function CloseModal() {
-    reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
     onOpenChange(false);
   }
 
@@ -146,11 +152,27 @@ export default function AddReminder({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" showCloseButton={false} >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-muted-foreground" />
-            Set Reminder
+            <span className="flex flex-1 items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              Set Reminder
+            </span>
+            {isDataFOund && (
+              <Tooltip content="Delete reminder" side="top">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-destructive hover:text-destructive"
+                  onClick={RemoveReminder}
+                  disabled={removing}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </Tooltip>
+            )}
           </DialogTitle>
         </DialogHeader>
         {isLoading && <ReminderFormSkeleton />}
@@ -256,22 +278,22 @@ export default function AddReminder({
               </div>
             </div>
 
-            <DialogFooter>
-              <AppButton
+            <DialogFooter className="flex items-center justify-end gap-2">
+              <Button
                 type="button"
-                onClick={RemoveReminder}
-                isLoading={removing}
-                idleLabel="Remove"
-                loadingLabel="Adding..."
-                successLabel="Added"
-              />
+                variant="outline"
+                className="h-10 min-w-30"
+                onClick={CloseModal}
+              >
+                Cancel
+              </Button>
               <AppButton
                 type="submit"
                 isLoading={isPending}
                 idleLabel="Add"
                 loadingLabel="Adding..."
                 successLabel="Added"
-                className=" min-w-30"
+                className="h-10 min-w-30"
               />
             </DialogFooter>
           </form>

@@ -9,6 +9,7 @@ export default function AppWrapper({
 }) {
   return (
     <main className=" flex flex-row  w-full max-w-[100%]">
+
       <SidebarProvider>
         {" "}
         <AppSidebar />

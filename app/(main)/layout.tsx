@@ -1,6 +1,8 @@
 import AppWrapper from "@/wrappers/AppWrapper";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import OneSignalInit from "@/wrappers/OneSignalWrapper";
+import Script from "next/script";
 export default async function AppLayout({
   children,
 }: Readonly<{
@@ -11,5 +13,14 @@ export default async function AppLayout({
   if (!token) {
     return redirect("/sign-in");
   }
-  return <AppWrapper> {children}</AppWrapper>;
+  return (
+    <>
+      <Script
+        src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
+        strategy="afterInteractive"
+        defer
+      />{" "}
+      <OneSignalInit /> <AppWrapper> {children}</AppWrapper>{" "}
+    </>
+  );
 }

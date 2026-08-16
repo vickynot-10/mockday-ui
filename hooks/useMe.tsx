@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/utils/axios";
 
 interface User {
-  id: string;
+  user_id: string;
   email: string;
   name: string;
 }

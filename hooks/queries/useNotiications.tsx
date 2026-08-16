@@ -28,3 +28,24 @@ export function useSaveNotifications() {
 }
 
 
+
+export function useSendEmailOtp() {
+  return useMutation({
+    mutationFn: (payload: { email: string }) =>
+      api.post("/notifications/send-otp", payload),
+  });
+}
+
+export function useVerifyEmailOtp() {
+  return useMutation({
+    mutationFn: (payload: { email: string; otp: string }) =>
+      api.post("/notifications/verify-otp", payload),
+  });
+}
+
+export function useRegisterPush() {
+  return useMutation({
+    mutationFn: (payload: { push_registered: boolean }) =>
+      api.post("/notifications/register-device", payload),
+  });
+}
