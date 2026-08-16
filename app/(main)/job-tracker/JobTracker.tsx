@@ -12,18 +12,17 @@ import {
   useGetTrackers,
   useUpdateStatusTrackers,
 } from "@/hooks/queries/useTrackers";
-import { useGetAllStatus, useSaveStatus } from "@/hooks/queries/useStatus";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Pencil, Trash2, EllipsisVertical } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  EllipsisVertical,
+  X,
+} from "lucide-react";
 import { formatDateTime } from "@/utils/formatDateTime";
 import {
   AppTable,
@@ -32,11 +31,8 @@ import {
 } from "@/components/common/AppTable";
 import { Badge } from "@/components/ui/badge";
 import AppIconButton from "@/components/common/AppIconButton";
-import { Control, useForm, UseFormSetValue, useWatch } from "react-hook-form";
-import { Label } from "@/components/ui/label";
-import { AppButton } from "@/components/common/AppButton";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import CreateStatus from "@/components/common/CreateStatus";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -58,12 +54,6 @@ type TrackerRow = {
   status_result: TrackerStatus;
 };
 
-type StatusForm = {
-  name: string;
-  color: string;
-  _id?: string | null;
-};
-
 export default function JobTracker() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
@@ -71,8 +61,8 @@ export default function JobTracker() {
 
   const { mutate } = useUpdateStatusTrackers();
 
-  function handleSelect(status_id: string, tracker_id: string) {
-    if (!status_id || !tracker_id) return;
+  function handleSelect(status_id: string | null, tracker_id: string) {
+    if (!tracker_id) return;
     mutate({ status_id, tracker_id: tracker_id });
   }
 
@@ -81,12 +71,6 @@ export default function JobTracker() {
     pageSize: 25,
   });
   const [sort, setSort] = useState<"1" | "-1">("-1");
-
-  const { register, handleSubmit, setValue, control } = useForm<StatusForm>({
-    defaultValues: { name: "", color: "#3B82F6" },
-  });
-
-  const { mutate: saveStatus, isPending } = useSaveStatus();
 
   const { data, isLoading } = useGetTrackers({
     page: pageInfo.page,
@@ -103,21 +87,6 @@ export default function JobTracker() {
 
   function OpenStatus() {
     setOpenModal(true);
-  }
-
-  function CloseModal() {
-    setOpenModal(false);
-  }
-
-  function onSubmit(values: StatusForm) {
-    saveStatus(values, {
-      onSuccess: (res: any) => {
-        if (res.success) {
-          toast.success(res.msg ?? "Saved Successfully !");
-          CloseModal();
-        }
-      },
-    });
   }
 
   const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
@@ -175,7 +144,7 @@ export default function JobTracker() {
               borderColor: row.status_result?.color,
             }}
           >
-            {row.status_result?.name ?? "Applied"}
+            {row.status_result?.name ?? "NA"}
           </Badge>
         ),
       },
@@ -218,22 +187,32 @@ export default function JobTracker() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 p-0">
                 <div className="max-h-56 overflow-y-auto p-1">
-                  {statuses.map((item) => (
-                    <DropdownMenuItem
-                      key={item._id}
-                      onClick={() => handleSelect(item._id, row._id)}
-                      className={cn(
-                        "flex items-center gap-2",
-                        item._id === status && "bg-accent/40",
-                      )}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="truncate">{item.name}</span>
-                    </DropdownMenuItem>
-                  ))}
+                  <DropdownMenuItem
+                    onClick={() => handleSelect(null, row._id)}
+                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span className="truncate">Clear Status</span>
+                  </DropdownMenuItem>
+
+                  {statuses &&
+                    statuses.length > 0 &&
+                    statuses.map((item) => (
+                      <DropdownMenuItem
+                        key={item._id}
+                        onClick={() => handleSelect(item._id, row._id)}
+                        className={cn(
+                          "flex items-center gap-2",
+                          item._id === status && "bg-accent/40",
+                        )}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="truncate">{item.name}</span>
+                      </DropdownMenuItem>
+                    ))}
                 </div>
 
                 <DropdownMenuSeparator className="mx-0" />
@@ -295,71 +274,7 @@ export default function JobTracker() {
         onPageChange={setPageInfo}
       />
 
-      <Dialog open={openModal}>
-        <DialogTrigger>clickck</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Status</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g. Interview"
-                {...register("name", { required: true })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="color">Color</Label>
-              <ColorField control={control} setValue={setValue} />
-            </div>
-            <DialogFooter>
-              <AppButton
-                type="submit"
-                idleLabel={"Create Status"}
-                loadingLabel={"Creating..."}
-                successLabel={"Created!"}
-                isLoading={isPending}
-              />
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <CreateStatus open={openModal} onOpenChange={setOpenModal} />
     </>
-  );
-}
-
-function ColorField({
-  control,
-  setValue,
-}: {
-  control: Control<StatusForm>;
-  setValue: UseFormSetValue<StatusForm>;
-}) {
-  const colorValue = useWatch({ control, name: "color" });
-
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        id="color"
-        type="color"
-        className="w-10 h-9 rounded-md border border-border cursor-pointer bg-transparent"
-        value={colorValue}
-        onChange={(e) =>
-          setValue("color", e.target.value, { shouldDirty: true })
-        }
-      />
-      <Input
-        value={colorValue}
-        onChange={(e) =>
-          setValue("color", e.target.value, { shouldDirty: true })
-        }
-        className="flex-1"
-      />
-    </div>
   );
 }

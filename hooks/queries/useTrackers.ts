@@ -14,7 +14,7 @@ type TrackerParams = {
 };
 
 type StatusParams = {
-  status_id: string;
+  status_id: string | null;
   tracker_id: string;
 };
 
