@@ -98,7 +98,6 @@ export const useRemindersTrackers = (tracker_id?: string) => {
 
 
 export const useSaveRemindersTrackers = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
       const res = await api.post("/trackers/reminders", data);
@@ -106,7 +105,24 @@ export const useSaveRemindersTrackers = () => {
     },
     onSuccess: (res: any) => {
       if (res.success) {
-        toast.success(res.msg || "Status Updated Successfully !");
+        toast.success(res.msg || "Reminder Updated Successfully !");
+      }
+    },
+  });
+};
+
+
+export const useRemoveRemindersTrackers = () => {
+  return useMutation({
+    mutationFn: async (tracker_id : string) => {
+      const res = await api.delete("/trackers/reminders", {
+        data : tracker_id
+      });
+      return res.data ?? null;
+    },
+    onSuccess: (res: any) => {
+      if (res.success) {
+        toast.success(res.msg || "Reminder Removed Successfully !");
       }
     },
   });

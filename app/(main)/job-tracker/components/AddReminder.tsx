@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import {
   useRemindersTrackers,
   useSaveRemindersTrackers,
+  useRemoveRemindersTrackers,
 } from "@/hooks/queries/useTrackers";
 
 type ReminderFormValues = {
@@ -71,10 +72,11 @@ export default function AddReminder({
   onOpenChange,
 }: AddReminderProps) {
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-
+  const [isDataFOund, setDataFound] = useState(false);
   const { data, isLoading } = useRemindersTrackers(trackerId);
 
   const { mutate, isPending } = useSaveRemindersTrackers();
+  const { mutate: remove, isPending: removing } = useRemoveRemindersTrackers();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -94,22 +96,34 @@ export default function AddReminder({
     },
   });
 
-
   useEffect(() => {
-    if(!data || !data.data || !data.success) return ;
-    reset(data.data)
-  },[data])
+    if (!data || !data.data || !data.success) return;
+    setDataFound(true);
+    reset(data.data);
+  }, [data]);
 
   const minTime =
     new Date().toDateString() === today.toDateString()
       ? format(new Date(), "HH:mm")
       : undefined;
 
+  function RemoveReminder() {
+    remove(trackerId, {
+      onSuccess: () => {
+        CloseModal();
+      },
+    });
+  }
+
+  function CloseModal() {
+    reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
+    onOpenChange(false);
+  }
+
   function onSubmit(values: ReminderFormValues) {
     mutate(values, {
       onSuccess: () => {
-        reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
-        onOpenChange(false);
+        CloseModal();
       },
     });
   }
@@ -139,11 +153,13 @@ export default function AddReminder({
             Set Reminder
           </DialogTitle>
         </DialogHeader>
+        {isLoading && <ReminderFormSkeleton />}
 
-        {isLoading ? (
-          <ReminderFormSkeleton />
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        {!isLoading && (
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-xs text-muted-foreground">Date</Label>
@@ -241,19 +257,21 @@ export default function AddReminder({
             </div>
 
             <DialogFooter>
-              <Button
+              <AppButton
                 type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
+                onClick={RemoveReminder}
+                isLoading={removing}
+                idleLabel="Remove"
+                loadingLabel="Adding..."
+                successLabel="Added"
+              />
               <AppButton
                 type="submit"
                 isLoading={isPending}
                 idleLabel="Add"
                 loadingLabel="Adding..."
                 successLabel="Added"
+                className=" min-w-30"
               />
             </DialogFooter>
           </form>
