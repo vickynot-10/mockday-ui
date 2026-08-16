@@ -26,12 +26,11 @@ import Image from "next/image";
 
 export type AppTableColumn<T> = {
   key: string;
-  label: string;
+  label: ReactNode;
   center?: boolean;
   className?: string;
   render?: (row: T, index: number) => ReactNode;
 };
-
 export type AppTablePageInfo = {
   page: number;
   pageSize: number;
