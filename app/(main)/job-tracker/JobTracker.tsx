@@ -1,13 +1,29 @@
 "use client";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import useDebounce from "@/hooks/app/useDebounce";
-import { useGetTrackers } from "@/hooks/queries/useTrackers";
-import { useGetAllStatus } from "@/hooks/queries/useStatus";
-import StatusMenu from "./components/StatusChange";
-import CreateStatus from "@/components/common/CreateStatus";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  useGetTrackers,
+  useUpdateStatusTrackers,
+} from "@/hooks/queries/useTrackers";
+import { useGetAllStatus, useSaveStatus } from "@/hooks/queries/useStatus";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, EllipsisVertical } from "lucide-react";
 import { formatDateTime } from "@/utils/formatDateTime";
 import {
   AppTable,
@@ -16,6 +32,11 @@ import {
 } from "@/components/common/AppTable";
 import { Badge } from "@/components/ui/badge";
 import AppIconButton from "@/components/common/AppIconButton";
+import { Control, useForm, UseFormSetValue, useWatch } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { AppButton } from "@/components/common/AppButton";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const EMPTY_ARRAY: never[] = [];
 const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
@@ -37,15 +58,36 @@ type TrackerRow = {
   status_result: TrackerStatus;
 };
 
+type StatusForm = {
+  name: string;
+  color: string;
+  _id?: string | null;
+};
+
 export default function JobTracker() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+
+  const { mutate } = useUpdateStatusTrackers();
+
+  function handleSelect(status_id: string, tracker_id: string) {
+    if (!status_id || !tracker_id) return;
+    mutate({ status_id, tracker_id: tracker_id });
+  }
 
   const [pageInfo, setPageInfo] = useState<AppTablePageInfo>({
     page: 1,
     pageSize: 25,
   });
   const [sort, setSort] = useState<"1" | "-1">("-1");
+
+  const { register, handleSubmit, setValue, control } = useForm<StatusForm>({
+    defaultValues: { name: "", color: "#3B82F6" },
+  });
+
+  const { mutate: saveStatus, isPending } = useSaveStatus();
+
   const { data, isLoading } = useGetTrackers({
     page: pageInfo.page,
     limit: pageInfo.pageSize,
@@ -56,13 +98,27 @@ export default function JobTracker() {
   const { data: statusData } = useGetAllStatus();
   const statuses: TrackerStatus[] = statusData?.data ?? EMPTY_ARRAY;
 
- 
-  const [openCreate, setOpenCreate] = useState(false);
-  const handleAddStatusClick = () => setOpenCreate(true);
-
-
   const rows = data?.data?.docs ?? EMPTY_ARRAY;
   const total = data?.data?.total ?? 0;
+
+  function OpenStatus() {
+    setOpenModal(true);
+  }
+
+  function CloseModal() {
+    setOpenModal(false);
+  }
+
+  function onSubmit(values: StatusForm) {
+    saveStatus(values, {
+      onSuccess: (res: any) => {
+        if (res.success) {
+          toast.success(res.msg ?? "Saved Successfully !");
+          CloseModal();
+        }
+      },
+    });
+  }
 
   const trackerColumns: AppTableColumn<TrackerRow>[] = useMemo(
     () => [
@@ -149,12 +205,50 @@ export default function JobTracker() {
               size="icon"
               className="h-8 w-8 text-destructive"
             />
-            <StatusMenu
-              id={row._id}
-              status={row.status}
-              statuses={statuses}
-              onAddStatus={handleAddStatusClick}
-            />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <AppIconButton
+                  icon={<EllipsisVertical />}
+                  tooltip="Change Status"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-0">
+                <div className="max-h-56 overflow-y-auto p-1">
+                  {statuses.map((item) => (
+                    <DropdownMenuItem
+                      key={item._id}
+                      onClick={() => handleSelect(item._id, row._id)}
+                      className={cn(
+                        "flex items-center gap-2",
+                        item._id === status && "bg-accent/40",
+                      )}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="truncate">{item.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+
+                <DropdownMenuSeparator className="mx-0" />
+
+                <div className="p-1">
+                  <DropdownMenuItem
+                    onClick={OpenStatus}
+                    className="flex items-center gap-2 text-primary"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Status
+                  </DropdownMenuItem>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ),
       },
@@ -201,7 +295,71 @@ export default function JobTracker() {
         onPageChange={setPageInfo}
       />
 
-      <CreateStatus open={openCreate} onOpenChange={setOpenCreate} />
+      <Dialog open={openModal}>
+        <DialogTrigger>clickck</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Status</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g. Interview"
+                {...register("name", { required: true })}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="color">Color</Label>
+              <ColorField control={control} setValue={setValue} />
+            </div>
+            <DialogFooter>
+              <AppButton
+                type="submit"
+                idleLabel={"Create Status"}
+                loadingLabel={"Creating..."}
+                successLabel={"Created!"}
+                isLoading={isPending}
+              />
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
+  );
+}
+
+function ColorField({
+  control,
+  setValue,
+}: {
+  control: Control<StatusForm>;
+  setValue: UseFormSetValue<StatusForm>;
+}) {
+  const colorValue = useWatch({ control, name: "color" });
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        id="color"
+        type="color"
+        className="w-10 h-9 rounded-md border border-border cursor-pointer bg-transparent"
+        value={colorValue}
+        onChange={(e) =>
+          setValue("color", e.target.value, { shouldDirty: true })
+        }
+      />
+      <Input
+        value={colorValue}
+        onChange={(e) =>
+          setValue("color", e.target.value, { shouldDirty: true })
+        }
+        className="flex-1"
+      />
+    </div>
   );
 }
