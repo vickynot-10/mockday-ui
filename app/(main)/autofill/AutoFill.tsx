@@ -2,7 +2,7 @@
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { useForm, useFieldArray } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Trash2, Save, ListPlus, Briefcase, ListChecks } from "lucide-react";
+import { Plus, Trash2, Save, ListPlus, Briefcase, ListChecks, CircleUserRound } from "lucide-react";
 import AutoFillSkeleton from "@/loaders/autofill.loader";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -45,6 +45,7 @@ type FormValues = {
 const tabs = [
   { id: "details", label: "Default Fields", icon: Briefcase },
   { id: "rules", label: "Field Rules", icon: ListChecks },
+  { id: "about_you", label: "About You", icon: CircleUserRound },
 ];
 
 const variants = {
