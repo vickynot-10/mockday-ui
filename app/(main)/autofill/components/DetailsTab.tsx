@@ -6,6 +6,10 @@ import { format } from "date-fns";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import DatePicker from "./DatePicker";
 import { FormValues } from "@/types/autofill.types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function DetailsTab() {
   const { register, control, watch, setValue } = useFormContext<FormValues>();
@@ -42,22 +46,20 @@ export default function DetailsTab() {
 
   return (
     <>
-      <div >
+      <div>
         <h2 className="text-lg font-semibold mb-4">Default Fields</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-muted-foreground">Email</label>
-            <input
+            <Label className="text-sm text-muted-foreground">Email</Label>
+            <Input
               {...register("email")}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="john@example.com"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-muted-foreground">Phone</label>
-            <input
+            <Label className="text-sm text-muted-foreground">Phone</Label>
+            <Input
               {...register("phone")}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="+91 98765 43210"
             />
           </div>
@@ -107,17 +109,16 @@ export default function DetailsTab() {
                 className="rounded-lg border border-border p-4 space-y-3"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-muted-foreground">Experience Point</label>
-                  <input
+                  <Label className="text-sm text-muted-foreground">Experience Point</Label>
+                  <Input
                     {...register(`experience.${index}.point` as const)}
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                     placeholder="e.g. Built and shipped a React dashboard used by 10k users"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm text-muted-foreground">Start Date</label>
+                    <Label className="text-sm text-muted-foreground">Start Date</Label>
                     <DatePicker
                       value={experienceValues[index]?.start_date ? new Date(experienceValues[index].start_date) : undefined}
                       onChange={(date) => handleStartDateChange(index, date)}
@@ -126,7 +127,7 @@ export default function DetailsTab() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm text-muted-foreground">End Date</label>
+                    <Label className="text-sm text-muted-foreground">End Date</Label>
                     <DatePicker
                       value={experienceValues[index]?.end_date ? new Date(experienceValues[index].end_date as string) : undefined}
                       onChange={(date) => handleEndDateChange(index, date)}
@@ -136,27 +137,26 @@ export default function DetailsTab() {
                   </div>
 
                   <div className="flex items-center gap-2 h-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       id={`currently-${field.id}`}
                       checked={!!isCurrent}
-                      onChange={(e) => ToggleCurrentlyWorking(index, e.target.checked)}
-                      className="h-4 w-4 rounded border-input"
+                      onCheckedChange={(checked) => ToggleCurrentlyWorking(index, checked === true)}
                     />
-                    <label htmlFor={`currently-${field.id}`} className="text-sm text-muted-foreground">
+                    <Label htmlFor={`currently-${field.id}`} className="text-sm text-muted-foreground">
                       Currently working
-                    </label>
+                    </Label>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => removeExperience(index)}
-                    className="h-9 w-9 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             );

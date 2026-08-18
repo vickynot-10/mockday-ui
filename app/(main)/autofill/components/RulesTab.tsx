@@ -5,6 +5,9 @@ import { Plus, Trash2, ListPlus } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import { FormValues } from "@/types/autofill.types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function RulesTab({ activeTab }: { activeTab: string }) {
   const { register, control, formState: { errors } } = useFormContext<FormValues>();
@@ -96,45 +99,47 @@ export default function RulesTab({ activeTab }: { activeTab: string }) {
                 className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-start"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-muted-foreground">Label contains</label>
-                  <input
+                  <Label className="text-sm text-muted-foreground">Label contains</Label>
+                  <Input
                     {...register(`rules.${index}.label` as const, {
                       validate: (value) => (!value?.trim() ? "Field is required" : true),
                     })}
-                    className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${labelError ? "border-destructive" : "border-input"}`}
+                    className={labelError ? "border-destructive" : ""}
                     placeholder="e.g. LinkedIn"
                   />
                   {labelError && <p className="text-xs text-destructive">{labelError.message}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-muted-foreground">Answer</label>
-                  <input
+                  <Label className="text-sm text-muted-foreground">Answer</Label>
+                  <Input
                     {...register(`rules.${index}.answer` as const, {
                       validate: (value) => (!value?.trim() ? "Field is required" : true),
                     })}
-                    className={`h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${answerError ? "border-destructive" : "border-input"}`}
+                    className={answerError ? "border-destructive" : ""}
                     placeholder="e.g. linkedin.com/in/you"
                   />
                   {answerError && <p className="text-xs text-destructive">{answerError.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:flex mt-[26px]">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={() => RemoveItem(index)}
-                    className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={AddItem}
-                    className="h-10 w-10 flex items-center justify-center rounded-md border border-input hover:bg-muted transition"
                   >
                     <Plus className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             );

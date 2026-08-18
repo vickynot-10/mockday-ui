@@ -27,7 +27,14 @@ export const navData: NavItem[] = [
 
   { label: "Settings", isSection: true },
   { title: "Tracker Statuses", icon: Tags, href: "/tracker-status" },
-  { title: "Notifications", icon: Bell, href: "/notifications" },
+  {
+    title: "Notifications",
+    icon: Bell,
+    children: [
+      { title: "Preferences", href: "/notifications/preferences" },
+      { title: "History", href: "/notifications/history" },
+    ],
+  },
 ];
 
 export default function AppSidebar() {

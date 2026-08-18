@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useGetUserNotifications } from "@/hooks/queries/useNotiications";
 import { NOTIFICATION_CONSTANTS } from "@/constants";
 import { BellRing, CheckCircle2, XCircle, LucideIcon } from "lucide-react";
 import NotificationsSkeleton from "@/loaders/notification_header.loader";
+import Link from "next/link";
 
 type Props = {
   trigger: ReactElement;
@@ -71,18 +73,23 @@ const NotificationsDropdown = ({
               </Badge>
             </DropdownMenuLabel>
 
-            {isLoading && (
-             <NotificationsSkeleton />
-            )}
+            {isLoading && <NotificationsSkeleton />}
 
             {!isLoading && notifications.length === 0 && (
-              <p className="px-4 py-6 text-sm text-muted-foreground text-center">
-                No notifications
-              </p>
+              <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <BellRing className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <Link href="/notifications-logs" className="text-sm text-muted-foreground">
+                  No notifications
+                </Link>
+              </div>
             )}
 
-            {!isLoading && notifications && notifications.length > 0 &&
-              notifications.map((item :any) => {
+            {!isLoading &&
+              notifications &&
+              notifications.length > 0 &&
+              notifications.map((item: any) => {
                 const config =
                   STATUS_MAP[item.status] ??
                   STATUS_MAP[NOTIFICATION_CONSTANTS.NOTIFICATION_TYPE.SUCCESS];
@@ -133,9 +140,11 @@ export default function NotificationsButton() {
     <NotificationsDropdown
       align="center"
       trigger={
-        <div className="rounded-full h-9 w-9 flex items-center justify-center bg-primary text-primary-foreground cursor-pointer">
-          <BellRing className="size-4" strokeWidth={2} />
-        </div>
+        <Avatar className="size-9 cursor-pointer">
+          <AvatarFallback>
+            <BellRing className="size-4" strokeWidth={2} />
+          </AvatarFallback>
+        </Avatar>
       }
     />
   );
