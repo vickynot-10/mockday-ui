@@ -16,12 +16,14 @@ import {
   Wand2,
   Tags,
   Bell,
+  Bot,
 } from "lucide-react";
 
 export const navData: NavItem[] = [
   { label: "Apps", isSection: true },
   { title: "Dashboard", icon: LayoutDashboard, href: "/" },
   { title: "Resumes", icon: FileText, href: "/resumes" },
+  { title: "AI Assistant", icon: Bot, href: "/ai-assistant" },
   { title: "Job Tracker", icon: Briefcase, href: "/job-tracker" },
   { title: "Autofill Rules", icon: Wand2, href: "/autofill" },
 
