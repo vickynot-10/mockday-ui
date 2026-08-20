@@ -3,12 +3,17 @@ import { useAIsendMessage } from "@/hooks/queries/useAI";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUp, Check, ChevronDown, Square } from "lucide-react";
 import { useRef, useState, useLayoutEffect } from "react";
+import { useGetResumes } from "@/hooks/queries/useAI";
+
 const MODELS = ["gpt-4o", "gpt-4o-mini", "claude-sonnet"];
 const MAX_ROWS = 8;
 const LINE_HEIGHT = 24;
 
 export function PromptComposer() {
   const { mutate, isPending } = useAIsendMessage();
+
+  const {data ,isLoading  }  = useGetResumes()
+
   const [text, setText] = useState("");
   const [model, setModel] = useState(MODELS[0]);
   const [modelOpen, setModelOpen] = useState(false);

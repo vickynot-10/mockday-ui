@@ -39,6 +39,7 @@ export function useMarkAsDefault() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["ai-resumes-list"] });
     },
   });
 }
@@ -52,6 +53,8 @@ export function useDeleteResumes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+
+      queryClient.invalidateQueries({ queryKey: ["ai-resumes-list"] });
     },
   });
 }
