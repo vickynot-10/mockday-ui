@@ -1,4 +1,3 @@
-
 import { Geist, Geist_Mono, Noto_Sans_Georgian } from "next/font/google";
 import "./globals.css";
 import RootWrapper from "@/wrappers/MainWrapper";
@@ -18,7 +17,6 @@ const notoGeorgian = Noto_Sans_Georgian({
   variable: "--font-serif",
 });
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,9 +29,7 @@ export default function RootLayout({
       className={`${geist.variable} ${geistMono.variable} ${notoGeorgian.variable}`}
     >
       <body className="min-h-full flex flex-col max-w-full overflow-x-clip">
-        <RootWrapper>
-        {children}
-        </RootWrapper>
+        <RootWrapper>{children}</RootWrapper>
       </body>
     </html>
   );
