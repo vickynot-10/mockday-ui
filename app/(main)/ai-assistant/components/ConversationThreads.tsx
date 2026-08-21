@@ -2,8 +2,9 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import * as React from "react";
+import { ThumbsUp, ThumbsDown, Copy, Check } from "lucide-react";
 
-export type ConversationVariant = "bubbles" | "document" | "compact";
+export type ConversationVariant = "bubbles" | "compact";
 export type MessageRole = "user" | "assistant" | "system";
 
 type ThreadContextValue = { variant: ConversationVariant };
@@ -13,7 +14,6 @@ const ThreadContext = React.createContext<ThreadContextValue>({
 
 export type ConversationThreadProps = React.HTMLAttributes<HTMLDivElement> & {
   variant?: ConversationVariant;
-  /** Auto-stick to the newest message unless the user scrolls up. */
   autoScroll?: boolean;
 };
 
@@ -35,7 +35,6 @@ const ConversationThread = React.forwardRef<
       () => ref.current as HTMLDivElement,
     );
     const [pinned, setPinned] = React.useState(true);
-    // Ref mirror so ResizeObserver / effects never read a stale `pinned`.
     const pinnedRef = React.useRef(true);
 
     const setPinnedBoth = React.useCallback((next: boolean) => {
@@ -46,8 +45,6 @@ const ConversationThread = React.forwardRef<
     const scrollToBottom = React.useCallback((behavior: ScrollBehavior) => {
       const el = ref.current;
       if (!el) return;
-      // `instant` keeps streaming growth glued without fighting layout;
-      // `smooth` is reserved for the intentional Jump-to-latest click.
       if (typeof el.scrollTo === "function") {
         el.scrollTo({ top: el.scrollHeight, behavior });
       } else {
@@ -55,17 +52,12 @@ const ConversationThread = React.forwardRef<
       }
     }, []);
 
-    // Stick to the bottom when a new message mounts.
     const childCount = React.Children.count(children);
     // biome-ignore lint/correctness/useExhaustiveDependencies: re-pin when a message is added
     React.useEffect(() => {
       if (autoScroll && pinnedRef.current) scrollToBottom("instant");
     }, [childCount, autoScroll, scrollToBottom]);
 
-    // Stick through *content* growth too (StreamingText ticks, wrapping) —
-    // childCount alone misses that. Observe the inner stack, not the scroll
-    // port: ResizeObserver on an overflow container does not fire when only
-    // scrollHeight grows.
     React.useEffect(() => {
       if (!autoScroll) return;
       const content = contentRef.current;
@@ -126,21 +118,14 @@ const ConversationThread = React.forwardRef<
 );
 ConversationThread.displayName = "ConversationThread";
 
-export type MessageAction = {
-  label: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-};
-
 export type ConversationMessageProps = React.HTMLAttributes<HTMLDivElement> & {
   role: MessageRole;
   name?: string;
-  avatar?: React.ReactNode;
   timestamp?: string;
-  /** Hover actions (copy, regenerate, …) revealed on hover. */
-  actions?: MessageAction[];
-  /** Shows a blinking caret at the end while tokens stream in. */
   streaming?: boolean;
+  conversation_id?: string;
+  message_id?: string;
+  copyText?: string;
 };
 
 const BUBBLE_BY_ROLE: Record<MessageRole, string> = {
@@ -157,10 +142,11 @@ const ConversationMessage = React.forwardRef<
     {
       role,
       name,
-      avatar,
       timestamp,
-      actions,
       streaming = false,
+      conversation_id,
+      message_id,
+      copyText,
       className,
       children,
       ...props
@@ -170,30 +156,55 @@ const ConversationMessage = React.forwardRef<
     const { variant } = React.useContext(ThreadContext);
     const reduce = useReducedMotion();
     const isUser = role === "user";
-    const isDocument = variant === "document";
     const isCompact = variant === "compact";
+    const [copied, setCopied] = React.useState(false);
+    const copyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    // No `layout` prop: streaming text grows the bubble every tick, and a
-    // layout animation on every message turns that growth into visible jumps
-    // (siblings re-measure and tween). Opacity-only enter is enough.
+    React.useEffect(() => {
+      return () => {
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      };
+    }, []);
+
+    const handleCopy = async () => {
+      if (!copyText) return;
+      try {
+        await navigator.clipboard.writeText(copyText);
+        setCopied(true);
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = setTimeout(() => setCopied(false), 3000);
+      } catch (err) {
+        console.error("copy failed", err);
+      }
+    };
+
+  
+    const isPersisted = Boolean(message_id);
+
+    const Wrapper: any = isPersisted ? "div" : motion.div;
+    const motionProps = isPersisted
+      ? {}
+      : {
+          initial: reduce ? false : { opacity: 0, y: 8 },
+          animate: { opacity: 1, y: 0 },
+          transition: {
+            type: "spring",
+            stiffness: 500,
+            damping: 34,
+            mass: 0.5,
+          },
+        };
     return (
-      <motion.div
+      <Wrapper
         ref={ref}
-        initial={reduce ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.9 }}
         data-slot="conversation-message"
         data-role={role}
-        className={`group/msg flex gap-3 ${isUser && !isDocument ? "flex-row-reverse" : ""} ${isCompact ? "gap-2" : ""} ${className ?? ""}`}
-        {...(props as React.ComponentProps<typeof motion.div>)}
+        className={`group/msg flex gap-3 ${isUser ? "flex-row-reverse" : ""} ${isCompact ? "gap-2" : ""} ${className ?? ""}`}
+        {...motionProps}
+        {...props}
       >
-        {avatar ? (
-          <div className="mt-0.5 size-7 shrink-0 overflow-hidden rounded-full bg-muted text-xs">
-            {avatar}
-          </div>
-        ) : null}
         <div
-          className={`flex min-w-0 flex-col gap-1 ${isUser && !isDocument ? "items-end" : "items-start"} ${isDocument ? "w-full" : "max-w-[80%]"}`}
+          className={`flex min-w-0 max-w-[80%] flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}
         >
           {(name || timestamp) && !isCompact ? (
             <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
@@ -206,11 +217,7 @@ const ConversationMessage = React.forwardRef<
             </div>
           ) : null}
           <div
-            className={
-              isDocument
-                ? "w-full text-sm leading-7 text-foreground"
-                : `rounded-2xl px-3.5 py-2 text-sm leading-6 shadow-2xs ${BUBBLE_BY_ROLE[role]} ${isUser ? "rounded-br-md" : "rounded-bl-md"}`
-            }
+            className={`rounded-2xl px-3.5 py-2 text-sm leading-6 shadow-2xs ${BUBBLE_BY_ROLE[role]} ${isUser ? "rounded-br-md" : "rounded-bl-md"}`}
           >
             <span className="[overflow-wrap:anywhere] whitespace-pre-wrap">
               {children}
@@ -219,44 +226,57 @@ const ConversationMessage = React.forwardRef<
               ) : null}
             </span>
           </div>
-          {actions && actions.length > 0 ? (
+          {role !== "system" ? (
             <div
-              className={`flex gap-0.5 px-1 opacity-0 transition-opacity group-hover/msg:opacity-100 ${isUser && !isDocument ? "flex-row-reverse" : ""}`}
+              className={`flex gap-0.5 px-1 opacity-0 transition-opacity group-hover/msg:opacity-100 ${isUser ? "flex-row-reverse" : ""}`}
             >
-              {actions.map((action) => (
-                <button
-                  key={action.label}
-                  type="button"
-                  aria-label={action.label}
-                  onClick={action.onClick}
-                  className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  {action.icon}
-                </button>
-              ))}
+            
+              <button
+                type="button"
+                aria-label="Copy"
+                onClick={handleCopy}
+                className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {copied ? (
+                    <motion.span
+                      key="check"
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.6 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <Check className="size-3.5 text-primary" />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="copy"
+                      initial={{ opacity: 0, scale: 0.6 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.6 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <Copy className="size-3.5" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
             </div>
           ) : null}
         </div>
-      </motion.div>
+      </Wrapper>
     );
   },
 );
 ConversationMessage.displayName = "ConversationMessage";
 
 export type StreamingTextProps = {
-  /** Full text to reveal token-by-token. */
   text: string;
-  /** Characters revealed per tick. */
   chunk?: number;
-  /** Milliseconds between ticks. */
   speed?: number;
-  /** Fired once the full text is revealed. */
   onDone?: () => void;
 };
 
-/**
- * Reveals `text` progressively. Honors reduced-motion by showing it instantly.
- */
 function StreamingText({
   text,
   chunk = 2,
@@ -306,7 +326,6 @@ function ArrowDownIcon({ className }: IconProps) {
   );
 }
 
-
 import type { BatchContent } from "@/stores/chat.store";
 
 function BatchResultView({ content }: { content: BatchContent }) {
@@ -317,13 +336,19 @@ function BatchResultView({ content }: { content: BatchContent }) {
       key: "resume_rework",
       node: (
         <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">Resume Rework</p>
+          <p className="mb-2 text-xs font-semibold text-foreground">
+            Resume Rework
+          </p>
           {content.resume_rework.error ? (
-            <p className="text-xs text-destructive">{content.resume_rework.error}</p>
+            <p className="text-xs text-destructive">
+              {content.resume_rework.error}
+            </p>
           ) : (
             <div className="flex flex-col gap-1.5">
               {content.resume_rework.paragraphs.map((p) => (
-                <p key={p.id} className="text-sm leading-6 text-foreground">{p.text}</p>
+                <p key={p.id} className="text-sm leading-6 text-foreground">
+                  {p.text}
+                </p>
               ))}
             </div>
           )}
@@ -337,9 +362,13 @@ function BatchResultView({ content }: { content: BatchContent }) {
       key: "cover_letter",
       node: (
         <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">Cover Letter</p>
+          <p className="mb-2 text-xs font-semibold text-foreground">
+            Cover Letter
+          </p>
           {content.cover_letter.error ? (
-            <p className="text-xs text-destructive">{content.cover_letter.error}</p>
+            <p className="text-xs text-destructive">
+              {content.cover_letter.error}
+            </p>
           ) : (
             <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
               {content.cover_letter.cover_letter}
@@ -356,7 +385,9 @@ function BatchResultView({ content }: { content: BatchContent }) {
       key: "job_match",
       node: (
         <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">Job Match</p>
+          <p className="mb-2 text-xs font-semibold text-foreground">
+            Job Match
+          </p>
           {jm.error ? (
             <p className="text-xs text-destructive">{jm.error}</p>
           ) : (
@@ -405,4 +436,9 @@ function BatchResultView({ content }: { content: BatchContent }) {
   );
 }
 
-export { ConversationMessage, ConversationThread, StreamingText , BatchResultView};
+export {
+  ConversationMessage,
+  ConversationThread,
+  StreamingText,
+  BatchResultView,
+};

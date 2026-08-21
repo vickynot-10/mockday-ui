@@ -34,8 +34,8 @@ export type TextContent = {
 
 export type AssistantContent = TextContent | BatchContent;
 
-export type UserMessage = { role: "user"; content: string };
-export type AssistantMessage = { role: "assistant"; content: AssistantContent };
+export type UserMessage = { role: "user"; content: string , _id ? :string};
+export type AssistantMessage = { role: "assistant"; content: AssistantContent , _id ? :string};
 export type Message = UserMessage | AssistantMessage;
 
 type ChatStore = {

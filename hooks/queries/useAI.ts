@@ -1,10 +1,7 @@
 import { api } from "@/utils/axios";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+
+const PAGE_SIZE = 20;
 
 export function useGetResumes() {
   return useQuery({
@@ -18,22 +15,25 @@ export function useGetResumes() {
 }
 
 export function useGetConversationsMessages(id?: string) {
-  return useQuery({
-    queryKey: ["conversations-messages"],
-    queryFn: async () => {
+  return useInfiniteQuery({
+    queryKey: ["conversations-messages", id],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
       const res = await api.get("/ai/conversation", {
-        params: {
-          conversation_id: id,
-        },
+        params: { page: pageParam, conversation_id: id },
       });
       return res.data;
     },
-    enabled: !!id,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage?.data?.length || lastPage.data.length < PAGE_SIZE) {
+        return undefined;
+      }
+      return allPages.length + 1;
+    },
     staleTime: Infinity,
+    enabled: !!id,
   });
 }
-
-const PAGE_SIZE = 20;
 
 export function useGetConversations() {
   return useInfiniteQuery({
