@@ -5,9 +5,13 @@ import { WelcomeHeading } from "./components/WelcomeHeading";
 import { ConversationView } from "./components/ConverstaionView";
 import { useChatStore } from "@/stores/chat.store";
 import { motion, AnimatePresence } from "motion/react";
+import { useGetConversationsMessages } from "@/hooks/queries/useAI";
 
-export default function AIAssistant() {
+export default function AIAssistant(  { conversation_id } : {conversation_id? :string}) {
   const hasStarted = useChatStore((s) => s.messages.length > 0);
+  const setMessages = useChatStore((s) => s.setMessages);
+
+  const { data , isLoading } =useGetConversationsMessages(conversation_id)
 
   return (
     <div

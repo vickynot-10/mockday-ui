@@ -43,6 +43,7 @@ type ChatStore = {
   currentStatus: string | null;
   isStreaming: boolean;
   addMessage: (msg: Message) => void;
+  setMessages: (msgs: Message[]) => void;
   setStatus: (status: string | null) => void;
   setStreaming: (val: boolean) => void;
 };
@@ -52,6 +53,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   currentStatus: null,
   isStreaming: false,
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+  setMessages: (msgs) => set({ messages: msgs }),
   setStatus: (status) => set({ currentStatus: status }),
   setStreaming: (val) => set({ isStreaming: val }),
 }));

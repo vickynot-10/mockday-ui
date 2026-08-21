@@ -28,6 +28,7 @@ export type NavItem = {
   icon?: LucideIcon;
   href?: string;
   children?: NavItem[];
+  onClick?: () => void;
 };
 
 export function NavMain({ items }: { items: NavItem[] }) {
@@ -171,12 +172,13 @@ function NavMainItem({
               onClick={() => {
                 setActiveParent(item.title!);
                 setActiveChild(null);
+                item.onClick?.(); // NEW — lets the parent react to specific items
               }}
               className={cn(
                 "rounded-md text-sm font-medium px-3 py-2 h-9 transition-colors cursor-pointer",
                 isParentActive ? "bg-primary! text-primary-foreground!" : "",
               )}
-              render={ item.href ? <Link href={item.href} /> : <></> }
+              render={item.href ? <Link href={item.href} /> : <></>}
             >
               {item.icon && <item.icon />}
               {item.title}
@@ -264,7 +266,9 @@ function NavMainSubItem({
             setActiveParent(parentTitle || "");
             setActiveChild(item.title!);
           }}
-          render={ item.href ? <Link href={item.href}>{item.title}</Link> : <></> }
+          render={
+            item.href ? <Link href={item.href}>{item.title}</Link> : <></>
+          }
         />
       </SidebarMenuSubItem>
     );
