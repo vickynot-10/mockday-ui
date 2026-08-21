@@ -11,7 +11,6 @@ import {
 } from "@/hooks/queries/useAI";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-
 export default function ConversationList() {
   const pathname = usePathname();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -77,6 +76,8 @@ export default function ConversationList() {
               <span className="truncate font-medium">
                 {conversation.title || "Untitled"}
               </span>
+
+              
             </Link>
           </motion.div>
         );

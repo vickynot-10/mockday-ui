@@ -34,26 +34,34 @@ export type TextContent = {
 
 export type AssistantContent = TextContent | BatchContent;
 
-export type UserMessage = { role: "user"; content: string , _id ? :string};
-export type AssistantMessage = { role: "assistant"; content: AssistantContent , _id ? :string};
+export type UserMessage = { role: "user"; content: string; _id?: string };
+export type AssistantMessage = {
+  role: "assistant";
+  content: AssistantContent;
+  _id?: string;
+};
 export type Message = UserMessage | AssistantMessage;
 
 type ChatStore = {
   messages: Message[];
   currentStatus: string | null;
   isStreaming: boolean;
+  abortController: AbortController | null;
   addMessage: (msg: Message) => void;
   setMessages: (msgs: Message[]) => void;
   setStatus: (status: string | null) => void;
   setStreaming: (val: boolean) => void;
+  setAbortController: (c: AbortController | null) => void;
 };
 
 export const useChatStore = create<ChatStore>((set) => ({
   messages: [],
   currentStatus: null,
   isStreaming: false,
+  abortController: null,
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
   setMessages: (msgs) => set({ messages: msgs }),
   setStatus: (status) => set({ currentStatus: status }),
   setStreaming: (val) => set({ isStreaming: val }),
+  setAbortController: (c) => set({ abortController: c }),
 }));

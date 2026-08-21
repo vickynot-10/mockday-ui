@@ -48,7 +48,7 @@ export function PromptComposer({
   conversation_id?: string;
 }) {
   const { data, isLoading } = useGetResumes();
-
+  const abortController = useChatStore((s) => s.abortController);
   const [text, setText] = useState("");
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -116,13 +116,17 @@ export function PromptComposer({
     message: string;
     resumeId: string | null;
   }) {
-    const { addMessage, setStatus, setStreaming } = useChatStore.getState();
+    const { addMessage, setStatus, setStreaming, setAbortController } =
+      useChatStore.getState();
+
+    const controller = new AbortController();
+    setAbortController(controller);
 
     setStreaming(true);
     addMessage({ role: "user", content: payload.message });
 
-    if(conversation_id){
-      (payload as any).conversation_id =conversation_id
+    if (conversation_id) {
+      (payload as any).conversation_id = conversation_id;
     }
 
     try {
@@ -133,6 +137,7 @@ export function PromptComposer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
           credentials: "include",
+          signal: controller.signal,
         },
       );
 
@@ -175,11 +180,21 @@ export function PromptComposer({
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       setStreaming(false);
+      setAbortController(null);
+
+      if (err.name === "AbortError") {
+        setStatus(null);
+        return;
+      }
       setStatus(null);
       throw err;
     }
+  }
+
+  function handleStop() {
+    abortController?.abort();
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -379,9 +394,10 @@ export function PromptComposer({
               </span>
             ) : null}
             <button
-              type="submit"
-              disabled={!canSend || isPending}
-              aria-label={isPending ? "Sending…" : "Send message"}
+              type={isPending ? "button" : "submit"}
+              onClick={isPending ? handleStop : undefined}
+              disabled={!isPending && !canSend}
+              aria-label={isPending ? "Stop generating" : "Send message"}
               className="relative inline-flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm transition-[transform,opacity,background-color] hover:bg-primary/90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             >
               <AnimatePresence mode="wait" initial={false}>

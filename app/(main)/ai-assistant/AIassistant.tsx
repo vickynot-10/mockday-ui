@@ -4,7 +4,11 @@ import { PromptComposer } from "./components/prompt-composer";
 import { ConversationView } from "./components/ConverstaionView";
 import { useChatStore } from "@/stores/chat.store";
 
-export default function AIAssistant({ conversation_id }: { conversation_id?: string }) {
+export default function AIAssistant({
+  conversation_id,
+}: {
+  conversation_id?: string;
+}) {
   const hasStarted = useChatStore((s) => s.messages.length > 0);
 
   return (
@@ -15,7 +19,7 @@ export default function AIAssistant({ conversation_id }: { conversation_id?: str
     >
       <ConversationView conversation_id={conversation_id} />
 
-      <div className={cn("w-full my-3", hasStarted && "mt-auto")}>
+      <div className={cn("w-full sticky  bottom-3 my-3", hasStarted && "mt-auto")}>
         <PromptComposer conversation_id={conversation_id} />
       </div>
     </div>

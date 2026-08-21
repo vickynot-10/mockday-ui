@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import {
   Sidebar,
@@ -19,16 +18,21 @@ import {
   Bell,
   Bot,
   ArrowLeft,
+  SquarePen,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import ConversationList from "../common/ConversationList";
+import { useChatStore } from "@/stores/chat.store";
+import AppIconButton from "../common/AppIconButton";
 
 type Mode = "main" | "conversations";
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [manualMode, setManualMode] = useState<Mode | null>(null);
+  const setMessages = useChatStore((s) => s.setMessages);
 
   useEffect(() => {
     setManualMode(null);
@@ -38,6 +42,11 @@ export default function AppSidebar() {
     ? "conversations"
     : "main";
   const mode = manualMode ?? routeMode;
+
+  const handleNewChat = () => {
+    setMessages([]);
+    router.push("/ai-assistant");
+  };
 
   const navData: NavItem[] = [
     { label: "Apps", isSection: true },
@@ -97,14 +106,24 @@ export default function AppSidebar() {
                     exit={{ opacity: 0, x: 16 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
                   >
-                    {/* Sits at the exact same top slot the "Apps" label occupied */}
-                    <button
-                      onClick={() => setManualMode("main")}
-                      className="flex w-full items-center gap-2 rounded-md px-0 py-2 text-xs font-medium uppercase text-sidebar-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                      <ArrowLeft size={14} />
-                      <span>Back to main</span>
-                    </button>
+                    <div className=" flex flex-row items-center justify-between">
+                      <button
+                        onClick={() => setManualMode("main")}
+                        className="flex w-full items-center gap-2 rounded-md px-0 py-2 text-xs font-medium uppercase text-sidebar-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Back to main</span>
+                      </button>
+
+                      <AppIconButton
+                        icon={<SquarePen className="h-4 w-4" />}
+                        tooltip="New Chat"
+                        variant="ghost"
+                        side="bottom"
+                        size="icon"
+                        onClick={handleNewChat}
+                      />
+                    </div>
 
                     <ConversationList />
                   </motion.div>
