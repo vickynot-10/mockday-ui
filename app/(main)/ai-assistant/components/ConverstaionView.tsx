@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 import { useChatStore, type Message } from "@/stores/chat.store";
 import { useGetConversationsMessages } from "@/hooks/queries/useAI";
@@ -27,47 +27,58 @@ export function ConversationView({
     useGetConversationsMessages(conversation_id);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
+  const isPaginatingRef = useRef(false);
 
   const { ref: topSentinelRef, inView: topInView } = useInView({
     root: containerRef.current,
     threshold: 0,
   });
+  useEffect(() => {
+    if (isPaginatingRef.current || !messages.length || !bottomRef.current)
+      return;
+    bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length]);
 
   useEffect(() => {
-  if (!data) return;
-  const flattened: Message[] = [...data.pages]
-    .reverse()
-    .flatMap((page) => [...page.data].reverse())
-    .map((m: any): Message => {
-      if (m.role === "user") {
-        return { role: "user", content: m.content.text, _id: m._id };
-      }
-      return { role: "assistant", content: m.content, _id: m._id };
-    });
-  setMessages(flattened);
-}, [data, setMessages]);
+    if (!data) return;
+    const flattened: Message[] = [...data.pages]
+      .reverse()
+      .flatMap((page) => [...page.data].reverse())
+      .map((m: any): Message => {
+        if (m.role === "user") {
+          return { role: "user", content: m.content.text, _id: m._id };
+        }
+        return { role: "assistant", content: m.content, _id: m._id };
+      });
+    setMessages(flattened);
+  }, [data, setMessages]);
 
   useEffect(() => {
     if (topInView && hasNextPage && !isFetchingNextPage) {
       const el = containerRef.current;
       if (el) prevScrollHeightRef.current = el.scrollHeight;
+      isPaginatingRef.current = true;
       fetchNextPage();
     }
   }, [topInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el || !prevScrollHeightRef.current) return;
     const diff = el.scrollHeight - prevScrollHeightRef.current;
-    if (diff > 0) {
-      el.scrollTop = diff;
-      prevScrollHeightRef.current = 0;
-    }
+    if (diff > 0) el.scrollTop = el.scrollTop + diff - 15;
+    prevScrollHeightRef.current = 0;
+    isPaginatingRef.current = false;
   }, [messages]);
 
   const isLoadingExisting = !!conversation_id && isLoading;
-  if (isLoadingExisting) return null;
+  if (isLoadingExisting) {
+    return [1, 2, 3, 4, 5].map((item) => {
+      return <MessagesLoading key={item} />;
+    });
+  }
 
   if (messages.length === 0) {
     return (
@@ -86,24 +97,12 @@ export function ConversationView({
   return (
     <ConversationThread
       ref={containerRef}
-      variant="bubbles"
-      className="flex-1 overflow-y-auto"
+      variant="compact"
+      className="flex-1 thin-scrollbar overflow-y-auto"
     >
       <div ref={topSentinelRef} />
 
-      {isFetchingNextPage && (
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-start">
-            <Skeleton className="h-9 w-48 rounded-2xl rounded-bl-md" />
-          </div>
-          <div className="flex justify-end">
-            <Skeleton className="h-9 w-40 rounded-2xl rounded-br-md" />
-          </div>
-          <div className="flex justify-start">
-            <Skeleton className="h-9 w-56 rounded-2xl rounded-bl-md" />
-          </div>
-        </div>
-      )}
+      {isFetchingNextPage && <MessagesLoading />}
 
       {messages.map((msg, i) => (
         <ConversationMessage
@@ -136,6 +135,31 @@ export function ConversationView({
       {isStreaming && currentStatus ? (
         <ConversationMessage role="system">{currentStatus}</ConversationMessage>
       ) : null}
+
+      <div
+        ref={bottomRef}
+        style={{
+          scrollMarginBottom: "50px",
+        }}
+      />
     </ConversationThread>
+  );
+}
+
+function MessagesLoading() {
+  return (
+    <>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-start">
+          <Skeleton className="h-9 w-48 rounded-2xl rounded-bl-md" />
+        </div>
+        <div className="flex justify-end">
+          <Skeleton className="h-9 w-40 rounded-2xl rounded-br-md" />
+        </div>
+        <div className="flex justify-start my-2">
+          <Skeleton className="h-9 w-56 rounded-2xl rounded-bl-md" />
+        </div>
+      </div>
+    </>
   );
 }
