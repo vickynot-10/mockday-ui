@@ -1,4 +1,4 @@
 import AIAssistant from "./AIassistant";
-export default function AIAssistantPage() {
+export default  function AIAssistantPage() {
   return <AIAssistant />;
 }
