@@ -113,10 +113,6 @@ export default function ConnectExtensionButton() {
           },
         );
       },
-
-      onError: (error) => {
-        toast.error("Failed to generate token");
-      },
     });
   }
 
@@ -151,16 +147,15 @@ export default function ConnectExtensionButton() {
         )}
 
         {status === "connected" && (
-          <div className="flex items-center gap-2">
-            <span className="flex items-center text-sm text-emerald-600">
-              <Check className="mr-2 h-4 w-4" />
-              Extension Connected
-            </span>
-
-            <Button variant="outline" size="sm" onClick={handleDisconnect}>
-              Disconnect
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-sm font-medium text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400"
+            size="sm"
+            onClick={handleDisconnect}
+          >
+            <Check className="h-3.5 w-3.5" />
+            Connected
+          </Button>
         )}
 
         {status === "not_connected" && (

@@ -56,21 +56,23 @@ const Dropdown = ({
           className="w-3xs rounded-2xl data-open:slide-in-from-bottom-20! data-closed:slide-out-to-bottom-20 data-open:fade-in-0 data-closed:fade-out-0 data-closed:zoom-out-100 duration-400"
         >
           <DropdownMenuGroup>
-           <DropdownMenuLabel className="flex items-center gap-3 px-4 py-3">
-  <div className="relative shrink-0">
-    <Avatar className="size-10">
-      <AvatarFallback>{getInitials(name)}</AvatarFallback>
-    </Avatar>
-    <span className="ring-card absolute right-0 bottom-0 size-2 rounded-full bg-green-600 ring-2" />
-  </div>
+            <DropdownMenuLabel className="flex items-center gap-3 px-4 py-3">
+              <div className="relative shrink-0">
+                <Avatar className="size-10">
+                  <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                </Avatar>
+                <span className="ring-card absolute right-0 bottom-0 size-2 rounded-full bg-green-600 ring-2" />
+              </div>
 
-  <div className="flex flex-col min-w-0">
-    <span className="text-popover-foreground text-sm font-medium truncate">
-      {name}
-    </span>
-    <span className="text-muted-foreground text-sm truncate">{email}</span>
-  </div>
-</DropdownMenuLabel>
+              <div className="flex flex-col min-w-0">
+                <span className="text-popover-foreground text-sm font-medium truncate">
+                  {name}
+                </span>
+                <span className="text-muted-foreground text-sm truncate">
+                  {email}
+                </span>
+              </div>
+            </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
 
@@ -110,7 +112,7 @@ const ProfileDropdown = () => {
       signingOut={isPending}
       trigger={
         <div className="rounded-full">
-          <Avatar className="size-10 cursor-pointer">
+          <Avatar className=" md:size-9 cursor-pointer">
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </div>

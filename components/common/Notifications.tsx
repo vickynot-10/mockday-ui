@@ -140,7 +140,7 @@ export default function NotificationsButton() {
     <NotificationsDropdown
       align="center"
       trigger={
-        <Avatar className="size-9 cursor-pointer">
+        <Avatar className="md:size-9 cursor-pointer">
           <AvatarFallback>
             <BellRing className="size-4" strokeWidth={2} />
           </AvatarFallback>

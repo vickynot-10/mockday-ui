@@ -160,7 +160,7 @@ export default function Resumes() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {isLoading &&
           [1, 2, 3, 4, 5, 6].map((n) => {
             return <ResumeCardSkeleton key={n} />;
@@ -173,107 +173,109 @@ export default function Resumes() {
         )}
 
         <AnimatePresence mode="popLayout">
-          {resumes.map((resume: any, i: number) => (
-            <motion.div
-              key={resume._id}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25, delay: i * 0.05 }}
-              whileHover={{ y: -3 }}
-            >
-              <Card className="h-full overflow-hidden">
-                <CardContent className="px-0">
-                  <button
-                    onClick={() => handleView(resume.preview_url)}
-                    className="relative w-full h-52 bg-muted border-b overflow-hidden block"
-                  >
-                    <iframe
-                      src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                      className="absolute top-0 left-0 pointer-events-none"
-                      style={{
-                        width: "200%",
-                        height: "200%",
-                        transform: "scale(0.5)",
-                        transformOrigin: "top left",
-                      }}
-                      title={resume.filename}
-                    />
-
-                    <div
-                      className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5"
-                      onClick={(e) => e.stopPropagation()}
+          {resumes &&
+            resumes.length > 0 &&
+            resumes.map((resume: any, i: number) => (
+              <motion.div
+                key={resume._id}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25, delay: i * 0.05 }}
+                whileHover={{ y: -3 }}
+              >
+                <Card className="h-full overflow-hidden">
+                  <CardContent className="px-0">
+                    <button
+                      onClick={() => handleView(resume.preview_url)}
+                      className="relative w-full h-52 bg-muted border-b overflow-hidden block"
                     >
-                      <Checkbox
-                        checked={selectedIds.includes(resume._id)}
-                        onCheckedChange={() => toggleSelect(resume._id)}
+                      <iframe
+                        src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                        className="absolute top-0 left-0 pointer-events-none"
+                        style={{
+                          width: "200%",
+                          height: "200%",
+                          transform: "scale(0.5)",
+                          transformOrigin: "top left",
+                        }}
+                        title={resume.filename}
                       />
+
+                      <div
+                        className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedIds.includes(resume._id)}
+                          onCheckedChange={() => toggleSelect(resume._id)}
+                        />
+                      </div>
+                    </button>
+                  </CardContent>
+
+                  <CardHeader className="flex flex-row items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <CardTitle className="truncate">
+                        {resume.filename ?? "Resume"}
+                      </CardTitle>
+                      <CardDescription>
+                        Uploaded on {formatDate(resume.created_at)}.
+                      </CardDescription>
                     </div>
-                  </button>
-                </CardContent>
 
-                <CardHeader className="flex flex-row items-start justify-between gap-2">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <CardTitle className="truncate">
-                      {resume.filename ?? "Resume"}
-                    </CardTitle>
-                    <CardDescription>
-                      Uploaded on {formatDate(resume.created_at)}.
-                    </CardDescription>
-                  </div>
-
-                  <button
-                    onClick={() => markAsDefault(resume._id)}
-                    disabled={marking || resume.default}
-                    className="shrink-0 disabled:cursor-default"
-                  >
-                    {marking && markingId === resume._id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Star
-                        className={`w-4 h-4 ${
-                          resume.default
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      />
-                    )}
-                  </button>
-                </CardHeader>
-
-                <CardContent className="flex flex-col gap-3 p-4 pt-0">
-                  <CardFooter className="gap-3 p-0 max-sm:flex-col max-sm:items-stretch">
-                    <AppVariantButton
-                      variant="default"
-                      size="sm"
-                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
-                      onClick={() =>
-                        handleDownload(resume._id, resume.filename)
-                      }
-                      disabled={isPending}
-                      isLoading={isLoadingAction(resume._id, "download")}
+                    <button
+                      onClick={() => markAsDefault(resume._id)}
+                      disabled={marking || resume.default}
+                      className="shrink-0 disabled:cursor-default"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      Download
-                    </AppVariantButton>
+                      {marking && markingId === resume._id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Star
+                          className={`w-4 h-4 ${
+                            resume.default
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        />
+                      )}
+                    </button>
+                  </CardHeader>
 
-                    <AppVariantButton
-                      variant="default"
-                      size="sm"
-                      className="flex-1 flex flex-row items-center justify-center gap-1.5"
-                      onClick={() => setDeleteTargetIds([resume._id])}
-                      disabled={isCardDeleting(resume._id)}
-                      isLoading={isCardDeleting(resume._id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </AppVariantButton>
-                  </CardFooter>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                  <CardContent className="flex flex-col gap-3 p-4 pt-0">
+                    <CardFooter className="gap-3 p-0 max-sm:flex-col max-sm:items-stretch">
+                      <AppVariantButton
+                        variant="default"
+                        size="sm"
+                        className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                        onClick={() =>
+                          handleDownload(resume._id, resume.filename)
+                        }
+                        disabled={isPending}
+                        isLoading={isLoadingAction(resume._id, "download")}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download
+                      </AppVariantButton>
+
+                      <AppVariantButton
+                        variant="default"
+                        size="sm"
+                        className="flex-1 flex flex-row items-center justify-center gap-1.5"
+                        onClick={() => setDeleteTargetIds([resume._id])}
+                        disabled={isCardDeleting(resume._id)}
+                        isLoading={isCardDeleting(resume._id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </AppVariantButton>
+                    </CardFooter>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
         </AnimatePresence>
       </div>
 
