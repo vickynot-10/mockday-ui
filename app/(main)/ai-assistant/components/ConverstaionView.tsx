@@ -4,7 +4,9 @@ import {
   StreamingText,
   ConversationThread,
   ConversationMessage,
+  BatchResultView,
 } from "./ConversationThreads";
+
 export function ConversationView() {
   const messages = useChatStore((s) => s.messages);
   const currentStatus = useChatStore((s) => s.currentStatus);
@@ -17,7 +19,11 @@ export function ConversationView() {
       {messages.map((msg, i) => (
         <ConversationMessage key={i} role={msg.role}>
           {msg.role === "assistant" ? (
-            <StreamingText text={msg.content} />
+            msg.content.kind === "batch" ? (
+              <BatchResultView content={msg.content} />
+            ) : (
+              <StreamingText text={msg.content.text} />
+            )
           ) : (
             msg.content
           )}

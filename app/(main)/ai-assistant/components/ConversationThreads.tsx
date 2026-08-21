@@ -306,4 +306,103 @@ function ArrowDownIcon({ className }: IconProps) {
   );
 }
 
-export { ConversationMessage, ConversationThread, StreamingText };
+
+import type { BatchContent } from "@/stores/chat.store";
+
+function BatchResultView({ content }: { content: BatchContent }) {
+  const sections: { key: string; node: React.ReactNode }[] = [];
+
+  if (content.resume_rework) {
+    sections.push({
+      key: "resume_rework",
+      node: (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="mb-2 text-xs font-semibold text-foreground">Resume Rework</p>
+          {content.resume_rework.error ? (
+            <p className="text-xs text-destructive">{content.resume_rework.error}</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {content.resume_rework.paragraphs.map((p) => (
+                <p key={p.id} className="text-sm leading-6 text-foreground">{p.text}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    });
+  }
+
+  if (content.cover_letter) {
+    sections.push({
+      key: "cover_letter",
+      node: (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="mb-2 text-xs font-semibold text-foreground">Cover Letter</p>
+          {content.cover_letter.error ? (
+            <p className="text-xs text-destructive">{content.cover_letter.error}</p>
+          ) : (
+            <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+              {content.cover_letter.cover_letter}
+            </p>
+          )}
+        </div>
+      ),
+    });
+  }
+
+  if (content.job_match) {
+    const jm = content.job_match;
+    sections.push({
+      key: "job_match",
+      node: (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="mb-2 text-xs font-semibold text-foreground">Job Match</p>
+          {jm.error ? (
+            <p className="text-xs text-destructive">{jm.error}</p>
+          ) : (
+            <div className="flex flex-col gap-2 text-sm text-foreground">
+              <p className="text-2xl font-semibold tabular-nums">
+                {jm.match_score}
+                <span className="text-sm text-muted-foreground">/100</span>
+              </p>
+              <p className="leading-6">{jm.summary}</p>
+              {jm.matched_keywords.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Matched: {jm.matched_keywords.join(", ")}
+                </p>
+              ) : null}
+              {jm.missing_keywords.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Missing: {jm.missing_keywords.join(", ")}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </div>
+      ),
+    });
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      {sections.map((s, i) => (
+        <motion.div
+          key={s.key}
+          initial={{ opacity: 0, x: -32 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 28,
+            mass: 0.9,
+            delay: i * 0.12,
+          }}
+        >
+          {s.node}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+export { ConversationMessage, ConversationThread, StreamingText , BatchResultView};

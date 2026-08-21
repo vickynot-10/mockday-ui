@@ -1,5 +1,6 @@
 "use client";
-import { useAIsendMessage, useGetResumes } from "@/hooks/queries/useAI";
+import { useGetResumes } from "@/hooks/queries/useAI";
+import { useChatStore, type AssistantContent } from "@/stores/chat.store";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileX } from "lucide-react";
@@ -19,7 +20,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useChatStore } from "@/stores/chat.store";
 
 const MAX_ROWS = 8;
 const LINE_HEIGHT = 24;
@@ -43,7 +43,6 @@ const commands = [
 ];
 
 export function PromptComposer() {
-  
   const { data, isLoading } = useGetResumes();
 
   const [text, setText] = useState("");
@@ -90,23 +89,22 @@ export function PromptComposer() {
     setResumeId(resume_id);
   }
 
-  const [isPending , setPending] = useState<boolean>(false)
+  const [isPending, setPending] = useState<boolean>(false);
 
   const submit = async () => {
     if (!canSend || isPending) return;
 
     const messageToSend = text;
 
-    setPending(true)
+    setPending(true);
 
     try {
       await sendMessage({ message: messageToSend, resumeId });
       setText("");
     } catch (err) {
       setText(messageToSend);
-    }
-    finally{
-      setPending(false)
+    } finally {
+      setPending(false);
     }
   };
 
@@ -135,7 +133,6 @@ export function PromptComposer() {
       let buffer = "";
 
       while (true) {
-        console.log("whi eloop rinnign")
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -154,11 +151,15 @@ export function PromptComposer() {
           if (eventType === "status") {
             setStatus(data.message);
           } else if (eventType === "complete") {
-            console.log(data ,"fromm")
-            // addMessage({ role: "assistant", content: data.reply });
+            const reply = data.reply;
+            const content: AssistantContent =
+              "message" in reply
+                ? { kind: "text", text: reply.message }
+                : { kind: "batch", ...reply };
+            addMessage({ role: "assistant", content });
             setStatus(null);
             setStreaming(false);
-            return; 
+            return;
           } else if (eventType === "error") {
             setStatus(null);
             setStreaming(false);
