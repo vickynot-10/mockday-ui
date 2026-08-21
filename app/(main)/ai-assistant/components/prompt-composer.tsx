@@ -43,7 +43,7 @@ const commands = [
 ];
 
 export function PromptComposer() {
-  const { mutate, isPending } = useAIsendMessage();
+  
   const { data, isLoading } = useGetResumes();
 
   const [text, setText] = useState("");
@@ -90,16 +90,23 @@ export function PromptComposer() {
     setResumeId(resume_id);
   }
 
+  const [isPending , setPending] = useState<boolean>(false)
+
   const submit = async () => {
     if (!canSend || isPending) return;
 
     const messageToSend = text;
+
+    setPending(true)
 
     try {
       await sendMessage({ message: messageToSend, resumeId });
       setText("");
     } catch (err) {
       setText(messageToSend);
+    }
+    finally{
+      setPending(false)
     }
   };
 
@@ -128,6 +135,7 @@ export function PromptComposer() {
       let buffer = "";
 
       while (true) {
+        console.log("whi eloop rinnign")
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -146,21 +154,22 @@ export function PromptComposer() {
           if (eventType === "status") {
             setStatus(data.message);
           } else if (eventType === "complete") {
-            addMessage({ role: "assistant", content: data.reply });
+            console.log(data ,"fromm")
+            // addMessage({ role: "assistant", content: data.reply });
             setStatus(null);
             setStreaming(false);
-            return; // success — resolves normally
+            return; 
           } else if (eventType === "error") {
             setStatus(null);
             setStreaming(false);
-            throw new Error(data.message); // failure — submit() catches this
+            throw new Error(data.message);
           }
         }
       }
     } catch (err) {
       setStreaming(false);
       setStatus(null);
-      throw err; // re-throw so submit() knows to restore the input
+      throw err;
     }
   }
 

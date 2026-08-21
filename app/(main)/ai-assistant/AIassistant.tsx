@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { PromptComposer } from "./components/prompt-composer";
 import { WelcomeHeading } from "./components/WelcomeHeading";
-import { ConversationView } from "./components/CoberstaionView";
+import { ConversationView } from "./components/ConverstaionView";
 import { useChatStore } from "@/stores/chat.store";
 import { motion, AnimatePresence } from "motion/react";
 
