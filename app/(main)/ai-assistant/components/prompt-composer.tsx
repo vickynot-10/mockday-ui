@@ -42,7 +42,11 @@ const commands = [
   },
 ];
 
-export function PromptComposer() {
+export function PromptComposer({
+  conversation_id,
+}: {
+  conversation_id?: string;
+}) {
   const { data, isLoading } = useGetResumes();
 
   const [text, setText] = useState("");
@@ -116,6 +120,10 @@ export function PromptComposer() {
 
     setStreaming(true);
     addMessage({ role: "user", content: payload.message });
+
+    if(conversation_id){
+      (payload as any).conversation_id =conversation_id
+    }
 
     try {
       const response = await fetch(

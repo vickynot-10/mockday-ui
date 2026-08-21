@@ -16,7 +16,7 @@ export default function AIAssistant({ conversation_id }: { conversation_id?: str
       <ConversationView conversation_id={conversation_id} />
 
       <div className={cn("w-full my-3", hasStarted && "mt-auto")}>
-        <PromptComposer />
+        <PromptComposer conversation_id={conversation_id} />
       </div>
     </div>
   );

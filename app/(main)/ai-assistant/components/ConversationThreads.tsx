@@ -158,7 +158,9 @@ const ConversationMessage = React.forwardRef<
     const isUser = role === "user";
     const isCompact = variant === "compact";
     const [copied, setCopied] = React.useState(false);
-    const copyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const copyTimeoutRef = React.useRef<
+      ReturnType<typeof setTimeout> | undefined
+    >(undefined);
 
     React.useEffect(() => {
       return () => {
@@ -178,7 +180,6 @@ const ConversationMessage = React.forwardRef<
       }
     };
 
-  
     const isPersisted = Boolean(message_id);
 
     const Wrapper: any = isPersisted ? "div" : motion.div;
@@ -230,7 +231,6 @@ const ConversationMessage = React.forwardRef<
             <div
               className={`flex gap-0.5 px-1 opacity-0 transition-opacity group-hover/msg:opacity-100 ${isUser ? "flex-row-reverse" : ""}`}
             >
-            
               <button
                 type="button"
                 aria-label="Copy"

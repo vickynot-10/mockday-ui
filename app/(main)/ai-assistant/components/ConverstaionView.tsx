@@ -35,18 +35,18 @@ export function ConversationView({
   });
 
   useEffect(() => {
-    if (!data) return;
-    const flattened: Message[] = [...data.pages]
-      .reverse()
-      .flatMap((page) => page.data)
-      .map((m: any): Message => {
-        if (m.role === "user") {
-          return { role: "user", content: m.content.text, _id: m._id };
-        }
-        return { role: "assistant", content: m.content, _id: m._id };
-      });
-    setMessages(flattened);
-  }, [data, setMessages]);
+  if (!data) return;
+  const flattened: Message[] = [...data.pages]
+    .reverse()
+    .flatMap((page) => [...page.data].reverse())
+    .map((m: any): Message => {
+      if (m.role === "user") {
+        return { role: "user", content: m.content.text, _id: m._id };
+      }
+      return { role: "assistant", content: m.content, _id: m._id };
+    });
+  setMessages(flattened);
+}, [data, setMessages]);
 
   useEffect(() => {
     if (topInView && hasNextPage && !isFetchingNextPage) {
