@@ -19,6 +19,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useChatStore } from "@/stores/chat.store";
 
 const MAX_ROWS = 8;
 const LINE_HEIGHT = 24;
@@ -89,11 +90,79 @@ export function PromptComposer() {
     setResumeId(resume_id);
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!canSend || isPending) return;
-    mutate({ message: text, resumeId });
-    setText("");
+
+    const messageToSend = text;
+
+    try {
+      await sendMessage({ message: messageToSend, resumeId });
+      setText("");
+    } catch (err) {
+      setText(messageToSend);
+    }
   };
+
+  async function sendMessage(payload: {
+    message: string;
+    resumeId: string | null;
+  }) {
+    const { addMessage, setStatus, setStreaming } = useChatStore.getState();
+
+    setStreaming(true);
+    addMessage({ role: "user", content: payload.message });
+
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/ai",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include",
+        },
+      );
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const evt of events) {
+          const eventMatch = evt.match(/event: (.+)/);
+          const dataMatch = evt.match(/data: (.+)/);
+          if (!eventMatch || !dataMatch) continue;
+
+          const eventType = eventMatch[1];
+          const data = JSON.parse(dataMatch[1]);
+
+          if (eventType === "status") {
+            setStatus(data.message);
+          } else if (eventType === "complete") {
+            addMessage({ role: "assistant", content: data.reply });
+            setStatus(null);
+            setStreaming(false);
+            return; // success — resolves normally
+          } else if (eventType === "error") {
+            setStatus(null);
+            setStreaming(false);
+            throw new Error(data.message); // failure — submit() catches this
+          }
+        }
+      }
+    } catch (err) {
+      setStreaming(false);
+      setStatus(null);
+      throw err; // re-throw so submit() knows to restore the input
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (commandsOpen) {
