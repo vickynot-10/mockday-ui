@@ -2,10 +2,12 @@
 import { useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import StatusGridSkeleton from "@/loaders/status.loader";
+import Tooltip from "@/components/common/ToolTip";
 import {
   useGetStatus,
   useDeleteStatus,
   useSetAsDefault,
+  useToggleDashboard,
 } from "@/hooks/queries/useStatus";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -16,13 +18,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  X,
+  Star,
+  LayoutDashboard,
+} from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
 import { cn } from "@/lib/utils";
 import CreateStatus from "@/components/common/CreateStatus";
 import { NoDataFound } from "@/components/common/AppTable";
+import AppIconButton from "@/components/common/AppIconButton";
 
 const items = [
   { label: "Settings", isSection: true },
@@ -43,6 +54,16 @@ export default function CustomizableStatus() {
     isPending: settingDefault,
     variables: settingDefaultId,
   } = useSetAsDefault();
+
+  const {
+    mutate: toggleDashboard,
+    isPending: togglingDashboard,
+    variables: togglingDashboardId,
+  } = useToggleDashboard();
+
+  function isTogglingDashboard(id: string) {
+    return togglingDashboard && togglingDashboardId?.id === id;
+  }
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,6 +89,14 @@ export default function CustomizableStatus() {
     );
   }
 
+  function handleToggleDashboard(
+    id: string,
+    e: React.MouseEvent,
+    currentValue: boolean,
+  ) {
+    e.stopPropagation();
+   toggleDashboard({ id, status: !Boolean(currentValue) });
+  }
   function handleChipClick(status: any) {
     if (selectMode) {
       toggleSelect(status._id);
@@ -176,7 +205,9 @@ export default function CustomizableStatus() {
 
       {isLoading && <StatusGridSkeleton />}
 
-      {!isLoading && statuses.length <= 0 && <NoDataFound text="No Status Found" />}
+      {!isLoading && statuses.length <= 0 && (
+        <NoDataFound text="No Status Found" />
+      )}
 
       {statuses && statuses.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -226,7 +257,9 @@ export default function CustomizableStatus() {
 
                   {!selectMode && (
                     <div className="flex items-center gap-0.5">
-                      <button
+                      <AppIconButton
+                        size="icon"
+                        tooltip="Set as Default"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSetDefault(status._id);
@@ -234,33 +267,65 @@ export default function CustomizableStatus() {
                         disabled={
                           status.default || isSettingDefault(status._id)
                         }
-                        className="p-1 rounded-full hover:bg-background disabled:opacity-40"
-                      >
-                        <Star
-                          className={cn(
-                            "w-3.5 h-3.5",
-                            status.default && "fill-current text-amber-500",
-                          )}
-                        />
-                      </button>
-                      <button
+                        icon={
+                          <Star
+                            className={cn(
+                              status.default && "fill-current text-amber-500",
+                            )}
+                          />
+                        }
+                      />
+
+                      <AppIconButton
+                        size="icon"
+                        tooltip={
+                          status.show_in_dashboard
+                            ? "Remove from Dashboard"
+                            : "Show in Dashboard"
+                        }
+                        onClick={(e) =>
+                          handleToggleDashboard(
+                            status._id,
+                            e,
+                            status.show_in_dashboard,
+                          )
+                        }
+                        disabled={isTogglingDashboard(status._id)}
+                        icon={
+                          <LayoutDashboard
+                            className={cn(
+                              status.show_in_dashboard &&
+                                "fill-current text-primary",
+                            )}
+                          />
+                        }
+                      />
+
+                      <AppIconButton
+                        size="icon"
+                        tooltip="Edit"
                         onClick={(e) => {
                           e.stopPropagation();
                           openEdit(status);
                         }}
-                        className="p-1 rounded-full hover:bg-background"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
+                        disabled={
+                          status.default || isSettingDefault(status._id)
+                        }
+                        icon={<Pencil />}
+                      />
+
+                      <AppIconButton
+                        size="icon"
+                        tooltip="Delete"
                         onClick={(e) => {
                           e.stopPropagation();
                           openDeleteConfirm([status._id]);
                         }}
-                        className="p-1 rounded-full hover:bg-background"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </button>
+                        disabled={
+                          status.default || isSettingDefault(status._id)
+                        }
+                        icon={<Trash2 className=" text-destructive" />}
+                      />
                     </div>
                   )}
 

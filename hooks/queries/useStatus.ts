@@ -1,5 +1,6 @@
 import { api } from "@/utils/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const QUERY_KEY = "customizable-status";
 const ALL_STATUS_QUERY_KEY = "get-all-status";
@@ -42,7 +43,7 @@ export function useDeleteStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      
+
       queryClient.invalidateQueries({ queryKey: [ALL_STATUS_QUERY_KEY] });
     },
   });
@@ -65,9 +66,26 @@ export const useGetAllStatus = () => {
   return useQuery({
     queryKey: [ALL_STATUS_QUERY_KEY],
     queryFn: async () => {
-      const res = await api.get("/status/all",);
+      const res = await api.get("/status/all");
       return res.data ?? null;
     },
     staleTime: 1000 * 60 * 5,
   });
 };
+
+export function useToggleDashboard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: boolean }) => {
+      const res = await api.patch(`/status/toggle-dashboard`, { id, status });
+      return res.data;
+    },
+    onSuccess: (res :any) => {
+       if (res.success) {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+          toast.success(res?.msg ?? "Dashboard visibility updated");
+        }
+      
+    },
+  });
+}
