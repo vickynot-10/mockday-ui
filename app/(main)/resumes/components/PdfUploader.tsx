@@ -6,7 +6,18 @@ import { api } from "@/utils/axios";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 
-const MAX_FILES = 3;
+import { MAX_RESUMES } from "@/constants";
+import { useGetResumes } from "@/hooks/queries/useResumes";
+
+const ALLOWED_TYPES = [
+  "application/pdf",
+  "application/msword", 
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+function isAllowedFile(file: File) {
+  return ALLOWED_TYPES.includes(file.type);
+}
 
 type FileEntry = {
   file: File;
@@ -61,7 +72,7 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
 
       await fetch(upload_url, {
         method: "PUT",
-        headers: { "Content-Type": "application/pdf" },
+        headers: { "Content-Type": file.type },
         body: file,
       });
 
@@ -75,25 +86,23 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
-    const valid = Array.from(incoming).filter(
-      (f) => f.type === "application/pdf",
-    );
+    const valid = Array.from(incoming).filter(isAllowedFile);
 
     if (valid.length !== incoming.length) {
-      return toast.error("Only PDF files are allowed");
+      return toast.error("Only PDF or Word documents are allowed");
     }
 
-    const room = MAX_FILES - entriesRef.current.length;
+    const room = MAX_RESUMES - entriesRef.current.length;
 
     if (room <= 0) {
-      toast.error(`Max ${MAX_FILES} resumes allowed`);
+      toast.error(`Max ${MAX_RESUMES} resumes allowed`);
       return;
     }
 
     const accepted = valid.slice(0, room);
 
     if (valid.length > room) {
-      toast.error(`Max ${MAX_FILES} resumes allowed`);
+      toast.error(`Max ${MAX_RESUMES} resumes allowed`);
     }
 
     if (accepted.length === 0) return;
@@ -125,6 +134,8 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
     addFiles(e.dataTransfer.files);
   };
 
+  const { refetch } = useGetResumes();
+
   const handleSubmit = async () => {
     const uploaded = entriesRef.current.filter((e) => e.status === "uploaded");
 
@@ -135,7 +146,7 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
 
     setIsSubmitting(true);
     try {
-      await api.post("/upload/confirm", {
+      const res = await api.post("/upload/confirm", {
         files: uploaded.map((e) => ({
           filename: e.file.name,
           file_id: e.file_id,
@@ -144,9 +155,12 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
         deleted_file_keys: deletedFileIds,
       });
 
-      toast.success("Resumes saved");
-      setDeletedFileIds([]);
-      onDone?.();
+      if (res.data?.success && res.data.success === true) {
+        toast.success(res.data?.msg ?? "Resumes saved");
+        setDeletedFileIds([]);
+        refetch();
+        onDone?.();
+      }
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to save resumes"));
     } finally {
@@ -154,7 +168,7 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
     }
   };
 
-  const atLimit = entries.length >= MAX_FILES;
+  const atLimit = entries.length >= MAX_RESUMES;
   const hasUploading = entries.some((e) => e.status === "uploading");
   const hasSubmittable =
     entries.some((e) => e.status === "uploaded") || deletedFileIds.length > 0;
@@ -181,7 +195,7 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
           <input
             ref={inputRef}
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,.doc,.docx"
             multiple
             hidden
             onChange={(e) => addFiles(e.target.files)}
@@ -191,14 +205,14 @@ export default function PdfUploader({ onDone }: { onDone?: () => void }) {
           </div>
           <p className="font-medium">Drag & drop files here</p>
           <p className="text-sm text-muted-foreground">
-            Or click to browse (max {MAX_FILES} files)
+            Or click to browse (max {MAX_RESUMES} files)
           </p>
         </motion.div>
       )}
 
       {atLimit && (
         <p className="text-sm text-muted-foreground text-center py-2">
-          Maximum of {MAX_FILES} resumes reached. Remove one to add another.
+          Maximum of {MAX_RESUMES} resumes reached. Remove one to add another.
         </p>
       )}
 

@@ -1,5 +1,5 @@
 import { api } from "@/utils/axios";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 const PAGE_SIZE = 20;
 

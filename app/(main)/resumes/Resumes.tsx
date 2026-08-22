@@ -30,6 +30,8 @@ import {
 } from "@/hooks/queries/useResumes";
 import { motion, AnimatePresence } from "framer-motion";
 import { MAX_RESUMES } from "@/constants";
+import { NoDataFound } from "@/components/common/AppTable";
+import Image from "next/image";
 
 const items = [{ label: "Apps", isSection: true }, { label: "Resumes" }];
 
@@ -167,9 +169,9 @@ export default function Resumes() {
           })}
 
         {!isLoading && resumes.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-full">
-            No resumes uploaded yet.
-          </p>
+          <div className="col-span-full">
+            <NoDataFound text="No Resumes Uploaded Yet" />
+          </div>
         )}
 
         <AnimatePresence mode="popLayout">
@@ -191,17 +193,42 @@ export default function Resumes() {
                       onClick={() => handleView(resume.preview_url)}
                       className="relative w-full h-52 bg-muted border-b overflow-hidden block"
                     >
-                      <iframe
-                        src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                        className="absolute top-0 left-0 pointer-events-none"
-                        style={{
-                          width: "200%",
-                          height: "200%",
-                          transform: "scale(0.5)",
-                          transformOrigin: "top left",
-                        }}
-                        title={resume.filename}
-                      />
+                      {resume.preview_url && (
+                        <iframe
+                          src={`${resume.preview_url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          className="absolute top-0 left-0 pointer-events-none"
+                          style={{
+                            width: "200%",
+                            height: "200%",
+                            transform: "scale(0.5)",
+                            transformOrigin: "top left",
+                          }}
+                          title={resume.filename}
+                        />
+                      )}
+
+                      {!resume.preview_url && resume.suffix === ".pdf" && (
+                        <div className="absolute flex w-full items-center justify-center h-full top-0 left-0 pointer-events-none">
+                          {" "}
+                          <Image
+                            src="docx.svg"
+                            height={100}
+                            width={100}
+                            alt="Pdf"
+                          />
+                        </div>
+                      )}
+
+                      {!resume.preview_url && resume.suffix === ".docx" && (
+                        <div className="absolute flex w-full items-center justify-center h-full top-0 left-0 pointer-events-none">
+                          <Image
+                            src="docx.svg"
+                            height={100}
+                            width={100}
+                            alt="Docx"
+                          />
+                        </div>
+                      )}
 
                       <div
                         className="absolute top-2 left-2 bg-background/90 rounded-md p-0.5"

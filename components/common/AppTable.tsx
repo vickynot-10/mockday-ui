@@ -254,14 +254,14 @@ export function AppTable<T extends Record<string, unknown>>({
 
 export function NoDataFound({ text = "No Data Found" }: { text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center w-full gap-2">
+    <div className="flex flex-col items-center justify-center w-full ">
       <Image
         src="/icons/no_data_found.svg"
         alt="No Data Found"
         height={400}
         width={400}
       />
-      <p className="text-base   font-bold text-muted-foreground">{text}</p>
+      <p className="text-sm font-medium text-muted-foreground/80">{text}</p>
     </div>
   );
 }
