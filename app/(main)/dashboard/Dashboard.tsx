@@ -16,7 +16,7 @@ export default function Dashboard() {
       <div className="w-full">
         <TrackerBarChart />
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[6fr_4fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[6fr_4fr]">
         <UpcomingReminders data={upcoming_reminders} />
         <StatusPieChart data={pie_chart} />
       </div>
