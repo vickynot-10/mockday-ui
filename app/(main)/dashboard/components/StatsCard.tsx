@@ -74,19 +74,17 @@ function TrendSparkline({
 export default function StatsCard({ total_applications, trackers_trends }: StatusProps) {
   return (
     <Card className="ring-foreground/10 gap-6 overflow-hidden rounded-xl shadow-xs ring-1 p-0">
-      <CardContent className="flex items-center w-full lg:flex-nowrap flex-wrap px-0">
-        <div className="lg:w-3/12 md:w-6/12 w-full border-0 border-b last:border-b-0 md:border-e md:even:border-e-0 md:nth-[n+3]:border-b-0 lg:border-b-0 lg:even:border-e lg:last:border-e-0">
-          <div className="p-6 flex items-start justify-between">
-            <div className="flex flex-col gap-4">
-              <p className="text-base font-medium text-card-foreground">Total Applications</p>
-              <div>
-                <p className="text-2xl font-medium text-card-foreground">{total_applications}</p>
-                <p className="text-xs text-muted-foreground mt-1">All time</p>
-              </div>
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-y-0 divide-border sm:divide-x lg:divide-x px-0">
+        <div className="p-6 flex items-start justify-between">
+          <div className="flex flex-col gap-4">
+            <p className="text-base font-medium text-card-foreground">Total Applications</p>
+            <div>
+              <p className="text-2xl font-medium text-card-foreground">{total_applications}</p>
+              <p className="text-xs text-muted-foreground mt-1">All time</p>
             </div>
-            <div className="p-3 rounded-full outline">
-              <Briefcase size={16} />
-            </div>
+          </div>
+          <div className="p-3 rounded-full outline">
+            <Briefcase size={16} />
           </div>
         </div>
 
@@ -94,32 +92,27 @@ export default function StatsCard({ total_applications, trackers_trends }: Statu
           const { trend, pct } = getTrend(t.thisWeek, t.lastWeek);
 
           return (
-            <div
-              key={t._id}
-              className="lg:w-3/12 md:w-6/12 w-full border-0 border-b last:border-b-0 md:border-e md:even:border-e-0 md:nth-[n+3]:border-b-0 lg:border-b-0 lg:even:border-e lg:last:border-e-0"
-            >
-              <div className="p-6 flex items-start justify-between">
-                <div className="flex flex-col gap-4">
-                  <p className="text-base font-medium text-card-foreground">{t.status_name}</p>
-                  <div>
-                    <p className="text-2xl font-medium text-card-foreground">{t.total}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">Last 7 days</p>
-                      <span
-                        className={`h-5 gap-1 rounded-4xl px-2 py-0.5 text-xs font-normal inline-flex items-center justify-center w-fit whitespace-nowrap ${
-                          trend === "down"
-                            ? "bg-red-600/10 text-red-600"
-                            : "bg-teal-400/10 text-teal-400"
-                        }`}
-                      >
-                        {pct > 0 ? "+" : ""}
-                        {pct}%
-                      </span>
-                    </div>
+            <div key={t._id} className="p-6 flex items-start justify-between">
+              <div className="flex flex-col gap-4">
+                <p className="text-base font-medium text-card-foreground">{t.status_name}</p>
+                <div>
+                  <p className="text-2xl font-medium text-card-foreground">{t.total}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">Last 7 days</p>
+                    <span
+                      className={`h-5 gap-1 rounded-4xl px-2 py-0.5 text-xs font-normal inline-flex items-center justify-center w-fit whitespace-nowrap ${
+                        trend === "down"
+                          ? "bg-red-600/10 text-red-600"
+                          : "bg-teal-400/10 text-teal-400"
+                      }`}
+                    >
+                      {pct > 0 ? "+" : ""}
+                      {pct}%
+                    </span>
                   </div>
                 </div>
-                <TrendSparkline lastWeek={t.lastWeek} thisWeek={t.thisWeek} color={t.status_color} />
               </div>
+              <TrendSparkline lastWeek={t.lastWeek} thisWeek={t.thisWeek} color={t.status_color} />
             </div>
           );
         })}
