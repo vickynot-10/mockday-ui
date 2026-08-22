@@ -25,7 +25,6 @@ export function ConversationView({
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useGetConversationsMessages(conversation_id);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
@@ -118,17 +117,17 @@ export function ConversationView({
                 : undefined
           }
         >
-          {msg.role === "assistant" ? (
-            msg.content.kind === "batch" ? (
-              <BatchResultView content={msg.content} />
-            ) : msg._id ? (
-              msg.content.text
-            ) : (
-              <StreamingText text={msg.content.text} />
-            )
-          ) : (
-            msg.content
+          {msg.role === "user" && msg.content}
+          {msg.role === "assistant" && msg.content.kind === "batch" && (
+            <BatchResultView content={msg.content} messageId={msg._id} />
           )}
+          {msg.role === "assistant" &&
+            msg.content.kind === "text" &&
+            msg._id &&
+            msg.content.text}
+          {msg.role === "assistant" &&
+            msg.content.kind === "text" &&
+            !msg._id && <StreamingText text={msg.content.text} />}
         </ConversationMessage>
       ))}
 

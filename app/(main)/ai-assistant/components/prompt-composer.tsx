@@ -20,10 +20,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const MAX_ROWS = 8;
 const LINE_HEIGHT = 24;
-
+const MAX_CHARS = 3000;
 const commands = [
   {
     label: "Resume Rework",
@@ -50,10 +53,12 @@ export function PromptComposer({
   const { data, isLoading } = useGetResumes();
   const abortController = useChatStore((s) => s.abortController);
   const [text, setText] = useState("");
-  const [resumeId, setResumeId] = useState<string | null>(null);
+  const resumeId = useChatStore((s) => s.resumeId);
+  const setResumeId = useChatStore((s) => s.setResumeId);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  const queryClient = useQueryClient();
+  const router = useRouter();
   useLayoutEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -98,6 +103,14 @@ export function PromptComposer({
   const submit = async () => {
     if (!canSend || isPending) return;
 
+    if (text.length > 3000) {
+      toast.error(
+        `Message is ${text.length - MAX_CHARS} characters over the limit — trim before sending.`,
+      );
+
+      return;
+    }
+
     const messageToSend = text;
 
     setPending(true);
@@ -128,6 +141,8 @@ export function PromptComposer({
     if (conversation_id) {
       (payload as any).conversation_id = conversation_id;
     }
+
+    (payload as any).send_at = new Date();
 
     try {
       const response = await fetch(
@@ -169,9 +184,17 @@ export function PromptComposer({
               "message" in reply
                 ? { kind: "text", text: reply.message }
                 : { kind: "batch", ...reply };
-            addMessage({ role: "assistant", content });
+            addMessage({ role: "assistant", content, _id: data.message_id });
+
             setStatus(null);
             setStreaming(false);
+
+            if (data.is_created) {
+              router.replace(`/ai-assistant/${data.conversation_id}`, {
+                scroll: false,
+              });
+              queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            }
             return;
           } else if (eventType === "error") {
             setStatus(null);
@@ -227,7 +250,7 @@ export function PromptComposer({
       submit();
     }
   };
-
+  const isOverLimit = text.length > MAX_CHARS;
   return (
     <>
       <form
@@ -286,6 +309,7 @@ export function PromptComposer({
             ref={textareaRef}
             rows={1}
             value={text}
+            maxLength={MAX_CHARS}
             disabled={isPending}
             placeholder="Ask anything…"
             aria-label="Prompt"
@@ -388,11 +412,13 @@ export function PromptComposer({
           </DropdownMenu>
 
           <div className="flex items-center gap-2">
-            {text.length > 0 ? (
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {text.length}
+            {text.length > 0 && (
+              <span
+                className={`text-xs tabular-nums ${text.length > MAX_CHARS * 0.9 ? "text-destructive" : "text-muted-foreground"}`}
+              >
+                {text.length}/{MAX_CHARS}
               </span>
-            ) : null}
+            )}
             <button
               type={isPending ? "button" : "submit"}
               onClick={isPending ? handleStop : undefined}
@@ -427,6 +453,7 @@ export function PromptComposer({
           </div>
         </div>
       </form>
+
       <p className="px-2 text-[11px] text-muted-foreground text-left  self-start">
         Start typing &quot;/&quot; to see helper commands
       </p>

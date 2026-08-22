@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 export type ResumeReworkResult = {
-  paragraphs: { id: string; text: string }[];
-  error: string | null;
+  has_file?: boolean;
+  error?: string | null;
 };
 
 export type CoverLetterResult = {
@@ -47,11 +47,13 @@ type ChatStore = {
   currentStatus: string | null;
   isStreaming: boolean;
   abortController: AbortController | null;
+  resumeId: string | null;
   addMessage: (msg: Message) => void;
   setMessages: (msgs: Message[]) => void;
   setStatus: (status: string | null) => void;
   setStreaming: (val: boolean) => void;
   setAbortController: (c: AbortController | null) => void;
+  setResumeId: (id: string | null) => void;
 };
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -59,9 +61,11 @@ export const useChatStore = create<ChatStore>((set) => ({
   currentStatus: null,
   isStreaming: false,
   abortController: null,
+  resumeId: null,
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
   setMessages: (msgs) => set({ messages: msgs }),
   setStatus: (status) => set({ currentStatus: status }),
   setStreaming: (val) => set({ isStreaming: val }),
   setAbortController: (c) => set({ abortController: c }),
+  setResumeId: (id) => set({ resumeId: id }),
 }));

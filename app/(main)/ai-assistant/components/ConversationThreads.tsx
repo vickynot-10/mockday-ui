@@ -327,56 +327,33 @@ function ArrowDownIcon({ className }: IconProps) {
 }
 
 import type { BatchContent } from "@/stores/chat.store";
-
-function BatchResultView({ content }: { content: BatchContent }) {
+import ResumeFileCard from "./ResumeFIleCard";
+function BatchResultView({
+  content,
+  messageId,
+}: {
+  content: BatchContent;
+  messageId?: string;
+}) {
   const sections: { key: string; node: React.ReactNode }[] = [];
 
-  if (content.resume_rework) {
-    sections.push({
-      key: "resume_rework",
-      node: (
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">
-            Resume Rework
-          </p>
-          {content.resume_rework.error ? (
-            <p className="text-xs text-destructive">
-              {content.resume_rework.error}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              {content.resume_rework.paragraphs.map((p) => (
-                <p key={p.id} className="text-sm leading-6 text-foreground">
-                  {p.text}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      ),
-    });
+  if (content.resume_rework?.error) {
+    return (
+      <p className="text-sm text-destructive">{content.resume_rework.error}</p>
+    );
+  }
+
+  if (content.resume_rework?.has_file) {
+    if (!messageId) return null;
+    return <ResumeFileCard messageId={messageId} />;
   }
 
   if (content.cover_letter) {
-    sections.push({
-      key: "cover_letter",
-      node: (
-        <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">
-            Cover Letter
-          </p>
-          {content.cover_letter.error ? (
-            <p className="text-xs text-destructive">
-              {content.cover_letter.error}
-            </p>
-          ) : (
-            <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
-              {content.cover_letter.cover_letter}
-            </p>
-          )}
-        </div>
-      ),
-    });
+    return (
+      <p className="text-sm whitespace-pre-wrap">
+        {content.cover_letter.cover_letter}
+      </p>
+    );
   }
 
   if (content.job_match) {
@@ -388,25 +365,68 @@ function BatchResultView({ content }: { content: BatchContent }) {
           <p className="mb-2 text-xs font-semibold text-foreground">
             Job Match
           </p>
-          {jm.error ? (
-            <p className="text-xs text-destructive">{jm.error}</p>
-          ) : (
-            <div className="flex flex-col gap-2 text-sm text-foreground">
-              <p className="text-2xl font-semibold tabular-nums">
-                {jm.match_score}
-                <span className="text-sm text-muted-foreground">/100</span>
-              </p>
+          {jm.error && <p className="text-xs text-destructive">{jm.error}</p>}
+          {!jm.error && (
+            <div className="flex flex-col gap-3 text-sm text-foreground">
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-semibold tabular-nums">
+                  {jm.match_score}
+                  <span className="text-sm text-muted-foreground">/100</span>
+                </p>
+              </div>
               <p className="leading-6">{jm.summary}</p>
-              {jm.matched_keywords.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Matched: {jm.matched_keywords.join(", ")}
-                </p>
-              ) : null}
-              {jm.missing_keywords.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Missing: {jm.missing_keywords.join(", ")}
-                </p>
-              ) : null}
+
+              {jm.matched_keywords.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {jm.matched_keywords.map((k) => (
+                    <span
+                      key={k}
+                      className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600 dark:text-emerald-400"
+                    >
+                      {k}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {jm.missing_keywords.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {jm.missing_keywords.map((k) => (
+                    <span
+                      key={k}
+                      className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+                    >
+                      {k}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {jm.strengths?.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Strengths
+                  </p>
+                  <ul className="flex flex-col gap-1 pl-4 text-sm leading-6 list-disc">
+                    {jm.strengths.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {jm.gaps?.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Gaps
+                  </p>
+                  <ul className="flex flex-col gap-1 pl-4 text-sm leading-6 list-disc">
+                    {jm.gaps.map((g, i) => (
+                      <li key={i}>{g}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
