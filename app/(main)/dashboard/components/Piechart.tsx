@@ -1,19 +1,15 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
 import { Label, Pie, PieChart } from "recharts";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { PieChartIcon } from "lucide-react";
 
 type StatusItem = {
   _id: string;
@@ -43,21 +39,21 @@ function getColor(item: StatusItem, index: number) {
 }
 
 export default function StatusPieChart({ data }: { data: StatusItem[] }) {
-  const total = React.useMemo(
+  const total = useMemo(
     () => data.reduce((sum, item) => sum + item.count, 0),
-    [data]
+    [data],
   );
 
-  const chartData = React.useMemo(
+  const chartData = useMemo(
     () =>
       data.map((item, index) => ({
         ...item,
         fill: getColor(item, index),
       })),
-    [data]
+    [data],
   );
 
-  const chartConfig: ChartConfig = React.useMemo(
+  const chartConfig: ChartConfig = useMemo(
     () =>
       data.reduce((config, item, index) => {
         config[item.status_name] = {
@@ -66,15 +62,29 @@ export default function StatusPieChart({ data }: { data: StatusItem[] }) {
         };
         return config;
       }, {} as ChartConfig),
-    [data]
+    [data],
   );
 
+  if (!data.length) {
+    return (
+      <Card className="h-[400px] flex flex-col">
+        <CardHeader>
+          <CardTitle>Status Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+          <PieChartIcon className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No data found</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-  <Card className="h-[400px] flex flex-col">
+    <Card className="h-[400px] flex flex-col">
       <CardHeader>
         <CardTitle>Status Breakdown</CardTitle>
       </CardHeader>
- <CardContent className="flex flex-1 items-center justify-center">
+      <CardContent className="flex flex-1 items-center justify-center">
         <ChartContainer
           config={chartConfig}
           className="mx-auto h-full w-full max-w-[250px]"

@@ -112,7 +112,7 @@ export default function UpcomingReminders({ data }: { data: Reminder[] }) {
 
               return (
                 <CarouselItem key={item._id}>
-                  <div className="rounded-lg border border-border bg-muted/30 p-5">
+                
                     <div className="flex gap-4">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/30 bg-primary/10">
                         {item.company_img ? (
@@ -214,7 +214,7 @@ export default function UpcomingReminders({ data }: { data: Reminder[] }) {
                         </span>
                       )}
                     </div>
-                  </div>
+                
                 </CarouselItem>
               );
             })}
