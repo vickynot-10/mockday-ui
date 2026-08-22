@@ -1,6 +1,7 @@
 "use client";
 import { Briefcase } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartConfig } from "@/components/ui/chart";
 
 type TrackerTrend = {
@@ -41,21 +42,15 @@ function TrendSparkline({
   ];
 
   const chartConfig = {
-    value: {
-      label: "Applications",
-      color,
-    },
+    value: { label: "Applications", color },
   } satisfies ChartConfig;
 
   const gradientId = `spark-${color.replace("#", "")}`;
 
   return (
-    <ChartContainer config={chartConfig} className="h-10 w-20">
+    <ChartContainer config={chartConfig} className="h-12 w-12">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
-        >
+        <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.6} />
@@ -76,68 +71,59 @@ function TrendSparkline({
   );
 }
 
-export default function StatsCard({
-  total_applications,
-  trackers_trends,
-}: StatusProps) {
+export default function StatsCard({ total_applications, trackers_trends }: StatusProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black p-5 flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-white/90">
-            Total Applications
-          </span>
-          <span className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center text-white/80">
-            <Briefcase size={16} />
-          </span>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-3xl font-semibold text-white">
-            {total_applications}
-          </span>
-        </div>
-      </div>
-
-      {trackers_trends.map((t) => {
-        const { trend, pct } = getTrend(t.thisWeek, t.lastWeek);
-
-        return (
-          <div
-            key={t._id}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-black p-5 flex flex-col gap-6"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white/90">
-                {t.status_name}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-3xl font-semibold text-white">
-                {t.total}
-              </span>
-              <div className="flex items-center justify-between gap-3">
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    trend === "up"
-                      ? "bg-emerald-500/15 text-emerald-400"
-                      : trend === "down"
-                        ? "bg-red-500/15 text-red-400"
-                        : "bg-white/10 text-white/60"
-                  }`}
-                >
-                  {pct > 0 ? "+" : ""}
-                  {pct}%
-                </span>
-                <TrendSparkline
-                  lastWeek={t.lastWeek}
-                  thisWeek={t.thisWeek}
-                  color={t.status_color}
-                />
+    <Card className="ring-foreground/10 gap-6 overflow-hidden rounded-xl shadow-xs ring-1 p-0">
+      <CardContent className="flex items-center w-full lg:flex-nowrap flex-wrap px-0">
+        <div className="lg:w-3/12 md:w-6/12 w-full border-0 border-b last:border-b-0 md:border-e md:even:border-e-0 md:nth-[n+3]:border-b-0 lg:border-b-0 lg:even:border-e lg:last:border-e-0">
+          <div className="p-6 flex items-start justify-between">
+            <div className="flex flex-col gap-4">
+              <p className="text-base font-medium text-card-foreground">Total Applications</p>
+              <div>
+                <p className="text-2xl font-medium text-card-foreground">{total_applications}</p>
+                <p className="text-xs text-muted-foreground mt-1">All time</p>
               </div>
             </div>
+            <div className="p-3 rounded-full outline">
+              <Briefcase size={16} />
+            </div>
           </div>
-        );
-      })}
-    </div>
+        </div>
+
+        {trackers_trends.map((t) => {
+          const { trend, pct } = getTrend(t.thisWeek, t.lastWeek);
+
+          return (
+            <div
+              key={t._id}
+              className="lg:w-3/12 md:w-6/12 w-full border-0 border-b last:border-b-0 md:border-e md:even:border-e-0 md:nth-[n+3]:border-b-0 lg:border-b-0 lg:even:border-e lg:last:border-e-0"
+            >
+              <div className="p-6 flex items-start justify-between">
+                <div className="flex flex-col gap-4">
+                  <p className="text-base font-medium text-card-foreground">{t.status_name}</p>
+                  <div>
+                    <p className="text-2xl font-medium text-card-foreground">{t.total}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">Last 7 days</p>
+                      <span
+                        className={`h-5 gap-1 rounded-4xl px-2 py-0.5 text-xs font-normal inline-flex items-center justify-center w-fit whitespace-nowrap ${
+                          trend === "down"
+                            ? "bg-red-600/10 text-red-600"
+                            : "bg-teal-400/10 text-teal-400"
+                        }`}
+                      >
+                        {pct > 0 ? "+" : ""}
+                        {pct}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <TrendSparkline lastWeek={t.lastWeek} thisWeek={t.thisWeek} color={t.status_color} />
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
