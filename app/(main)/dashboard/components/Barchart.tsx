@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
-import { ChevronDown, Check, PackageOpen } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  CartesianGrid,
+  LabelList,
+  XAxis,
+} from "recharts";
+import {
+  ChevronDown,
+  Check,
+  PackageOpen,
+  BarChart3,
+  LineChart as LineChartIcon,
+} from "lucide-react";
 import { format, parseISO } from "date-fns";
 import {
   Card,
@@ -26,7 +40,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useDashboardChartData } from "@/hooks/queries/useDashboard";
-import { BarChartLoader } from "@/loaders/dashboard.loader";
+import { BarChartLoader, LineChartLoader } from "@/loaders/dashboard.loader";
 
 type ChartRow = {
   date: string;
@@ -69,6 +83,7 @@ const EMPTY_ARRAY: never[] = [];
 
 export default function TrackerBarChart() {
   const [type, setType] = useState(1);
+  const [chartType, setChartType] = useState(1);
   const { data, isLoading } = useDashboardChartData(type);
 
   const response: ChartApiResponse | undefined = data?.data ?? data;
@@ -84,33 +99,55 @@ export default function TrackerBarChart() {
           <CardDescription>{activeLabel}</CardDescription>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline" size="sm" className="gap-1">
-                {activeLabel}
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            }
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-md border border-border p-0.5">
+            <Button
+              variant={chartType === 1 ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setChartType(1)}
+            >
+              <BarChart3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={chartType === 2 ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setChartType(2)}
+            >
+              <LineChartIcon className="h-4 w-4" />
+            </Button>
+          </div>
 
-          <DropdownMenuContent align="end">
-            {DATE_FILTER.map((filter) => (
-              <DropdownMenuItem
-                key={filter.value}
-                onClick={() => setType(filter.value)}
-                className="flex items-center justify-between"
-              >
-                {filter.label}
-                {filter.value === type && <Check className="h-4 w-4" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="sm" className="gap-1">
+                  {activeLabel}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              }
+            />
+
+            <DropdownMenuContent align="end">
+              {DATE_FILTER.map((filter) => (
+                <DropdownMenuItem
+                  key={filter.value}
+                  onClick={() => setType(filter.value)}
+                  className="flex items-center justify-between"
+                >
+                  {filter.label}
+                  {filter.value === type && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
 
       <CardContent>
-        {isLoading && <BarChartLoader />}
+        {isLoading && chartType === 1 && <BarChartLoader />}
+        {isLoading && chartType === 2 && <LineChartLoader />}
 
         {!isLoading && rows.length <= 0 && (
           <div className="flex h-[180px] flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -119,7 +156,7 @@ export default function TrackerBarChart() {
           </div>
         )}
 
-        {!isLoading && rows && rows.length > 0 && (
+        {!isLoading && rows && rows.length > 0 && chartType === 1 && (
           <ChartContainer config={chartConfig} className="h-[180px] w-full">
             <BarChart
               accessibilityLayer
@@ -149,6 +186,48 @@ export default function TrackerBarChart() {
                 />
               </Bar>
             </BarChart>
+          </ChartContainer>
+        )}
+
+        {!isLoading && rows && rows.length > 0 && chartType === 2 && (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[180px] w-full"
+          >
+            <LineChart
+              accessibilityLayer
+              data={rows}
+              margin={{
+                left: 12,
+                right: 12,
+              }}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => formatTick(value, type)}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    className="w-[150px]"
+                    nameKey="count"
+                    hideLabel
+                  />
+                }
+              />
+              <Line
+                dataKey="count"
+                type="monotone"
+                stroke="var(--color-count)"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>
