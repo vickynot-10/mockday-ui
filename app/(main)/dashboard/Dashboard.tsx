@@ -12,16 +12,13 @@ export default function Dashboard() {
   const upcoming_reminders = data?.upcoming_reminders ?? EMPTY_ARRAY;
 
   return (
-    <div className=" flex flex-col gap-6" >
-      <div className=" w-full">
+    <div className="flex flex-col pb-8 gap-6">
+      <div className="w-full">
         <TrackerBarChart />
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[7fr_3fr]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[6fr_4fr]">
         <UpcomingReminders data={upcoming_reminders} />
-
-        <div className="w-full">
-          <StatusPieChart data={pie_chart} />
-        </div>
+        <StatusPieChart data={pie_chart} />
       </div>
     </div>
   );
