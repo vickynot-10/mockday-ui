@@ -96,10 +96,13 @@ function CustomFieldRow({
   onKeyDownLabel: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onRemove: () => void;
 }) {
-  const values = useWatch({ control, name: `custom_rules.${index}.values` }) || [];
-  const { ref: labelRegisterRef, onBlur: labelRegisterOnBlur, ...labelRegisterProps } = register(
-    `custom_rules.${index}.label` as const,
-  );
+  const values =
+    useWatch({ control, name: `custom_rules.${index}.values` }) || [];
+  const {
+    ref: labelRegisterRef,
+    onBlur: labelRegisterOnBlur,
+    ...labelRegisterProps
+  } = register(`custom_rules.${index}.label` as const);
 
   function handleLabelBlur(e: React.FocusEvent<HTMLInputElement>) {
     labelRegisterOnBlur(e);
@@ -115,36 +118,56 @@ function CustomFieldRow({
       transition={{ duration: 0.15 }}
       className="rounded-lg border border-border p-4 space-y-3"
     >
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-sm text-muted-foreground">Label</Label>
-        <Input
-          {...labelRegisterProps}
-          ref={(node) => {
-            labelRegisterRef(node);
-            labelRefs.current[index] = node;
-          }}
-          onBlur={handleLabelBlur}
-          onKeyDown={onKeyDownLabel}
-          placeholder="e.g. How Did You Hear About Us?"
-        />
+      <div className=" grid grid-cols-2 items-center justify-between">
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm text-muted-foreground">Label</Label>
+          <Input
+            {...labelRegisterProps}
+            ref={(node) => {
+              labelRegisterRef(node);
+              labelRefs.current[index] = node;
+            }}
+            onBlur={handleLabelBlur}
+            onKeyDown={onKeyDownLabel}
+            placeholder="e.g. How Did You Hear About Us?"
+          />
+        </div>
+        <div className="flex justify-end flex-row items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onRemove}
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onRemove}
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-sm text-muted-foreground">Possible Answers</Label>
-        <ChipsInput
-          values={values}
-          onChange={(next) =>
-            setValue(`custom_rules.${index}.values`, next, { shouldDirty: true })
-          }
-          placeholder="Type an answer and press Enter"
-        />
-      </div>
-
-      <div className="flex justify-end">
-        <Button type="button" variant="outline" size="icon" onClick={onRemove}>
-          <Trash2 className="w-4 h-4 text-destructive" />
-        </Button>
-      </div>
+    
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm text-muted-foreground">
+            Possible Answers
+          </Label>
+          <ChipsInput
+            values={values}
+            onChange={(next) =>
+              setValue(`custom_rules.${index}.values`, next, {
+                shouldDirty: true,
+              })
+            }
+            placeholder="Type an answer and press Enter"
+          />
+        </div>
+     
     </motion.div>
   );
 }
@@ -187,7 +210,7 @@ export default function CustomFieldsTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-semibold">Custom Fields</h2>
+        <h2 className="text-lg font-semibold">Field Rules</h2>
         <AppVariantButton type="button" size="sm" onClick={AddCustomField}>
           <Plus className="w-4 h-4" />
           Add Field
@@ -195,11 +218,10 @@ export default function CustomFieldsTab() {
       </div>
 
       <p className="text-xs text-muted-foreground mb-4">
-        Add rules for fields the defaults above don't cover — like "How Did
-        You Hear About Us?". For each label, add one or more possible answers
-        in priority order; the extension fills the first match it finds on
-        the page. Labels and answers are saved lowercase with underscores
-        instead of spaces. Press Ctrl+Enter in a label field to add another.
+        Add rules for fields the defaults above don't cover — like "How Did You
+        Hear About Us?". For each label, add one or more possible answers in
+        priority order; the extension fills the first match it finds on the
+        page.
       </p>
 
       <div className="space-y-4">
@@ -209,9 +231,10 @@ export default function CustomFieldsTab() {
               <ListPlus className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-medium">No custom fields yet</p>
+              <p className="text-sm font-medium">No field rules added yet</p>
               <p className="text-sm mt-2 text-muted-foreground">
-                Add a label and possible answers to autofill fields the defaults miss.
+                Add a label and possible answers to autofill fields the defaults
+                miss.
               </p>
             </div>
             <AppVariantButton type="button" size="sm" onClick={AddCustomField}>
