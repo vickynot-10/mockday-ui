@@ -1,5 +1,6 @@
 import { api } from "@/utils/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const QUERY_KEY = "autofill";
 
@@ -21,7 +22,8 @@ export function useSaveAutoFill() {
       const res = await api.post("/autofill", data);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (res: any) => {
+      toast.success(res.msg ?? "Updated Successfully !");
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
   });

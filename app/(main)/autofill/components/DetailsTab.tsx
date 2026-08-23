@@ -2,15 +2,15 @@
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { motion } from "motion/react";
 import { Plus, Trash2, ListPlus } from "lucide-react";
-import { format } from "date-fns";
 import AppVariantButton from "@/components/common/AppVariantButton";
-import DatePicker from "./DatePicker";
 import { FormValues } from "@/types/autofill.types";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import DatePicker from "@/components/common/DatePickerModal";
+import { format } from "date-fns";
 export default function DetailsTab() {
   const { register, control, watch, setValue } = useFormContext<FormValues>();
 
@@ -35,8 +35,7 @@ export default function DetailsTab() {
     setValue(`experience.${index}.currently_working_on`, checked, { shouldDirty: true });
     setValue(`experience.${index}.end_date`, checked ? null : "", { shouldDirty: true });
   }
-
-  function handleStartDateChange(index: number, date: Date | undefined) {
+ function handleStartDateChange(index: number, date: Date | undefined) {
     setValue(`experience.${index}.start_date`, date ? format(date, "yyyy-MM-dd") : "", { shouldDirty: true });
   }
 
@@ -110,43 +109,44 @@ export default function DetailsTab() {
               >
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-sm text-muted-foreground">Experience Point</Label>
-                  <Input
+                  <Textarea
                     {...register(`experience.${index}.point` as const)}
                     placeholder="e.g. Built and shipped a React dashboard used by 10k users"
+                    rows={3}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm text-muted-foreground">Start Date</Label>
-                    <DatePicker
-                      value={experienceValues[index]?.start_date ? new Date(experienceValues[index].start_date) : undefined}
-                      onChange={(date) => handleStartDateChange(index, date)}
-                      placeholder="Start date"
-                    />
-                  </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm text-muted-foreground">Start Date</Label>
+          <DatePicker
+            value={experienceValues[index]?.start_date ? new Date(experienceValues[index].start_date) : undefined}
+            onChange={(date) => handleStartDateChange(index, date)}
+            placeholder="Start date"
+          />
+        </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm text-muted-foreground">End Date</Label>
-                    <DatePicker
-                      value={experienceValues[index]?.end_date ? new Date(experienceValues[index].end_date as string) : undefined}
-                      onChange={(date) => handleEndDateChange(index, date)}
-                      placeholder="End date"
-                      disabled={isCurrent}
-                    />
-                  </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm text-muted-foreground">End Date</Label>
+          <DatePicker
+            value={experienceValues[index]?.end_date ? new Date(experienceValues[index].end_date as string) : undefined}
+            onChange={(date) => handleEndDateChange(index, date)}
+            placeholder="End date"
+            disabled={isCurrent}
+          />
+        </div>
 
-                  <div className="flex items-center gap-2 h-10">
-                    <Checkbox
-                      id={`currently-${field.id}`}
-                      checked={!!isCurrent}
-                      onCheckedChange={(checked) => ToggleCurrentlyWorking(index, checked === true)}
-                    />
-                    <Label htmlFor={`currently-${field.id}`} className="text-sm text-muted-foreground">
-                      Currently working
-                    </Label>
-                  </div>
-                </div>
+        <div className="flex items-center gap-2 h-10">
+          <Checkbox
+            id={`currently-${field.id}`}
+            checked={!!isCurrent}
+            onCheckedChange={(checked) => ToggleCurrentlyWorking(index, checked === true)}
+          />
+          <Label htmlFor={`currently-${field.id}`} className="text-sm text-muted-foreground">
+            Currently working
+          </Label>
+        </div>
+      </div>
 
                 <div className="flex justify-end">
                   <Button
