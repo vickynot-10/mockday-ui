@@ -6,15 +6,24 @@ import { useGetConversationsMessages } from "@/hooks/queries/useAI";
 import { WelcomeHeading } from "./WelcomeHeading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "motion/react";
-import { ConversationThread, ConversationMessage, TypingIndicator } from "./ConversationThreads";
+import {
+  ConversationThread,
+  ConversationMessage,
+  TypingIndicator,
+} from "./ConversationThreads";
 
-export function ConversationView({ conversation_id }: { conversation_id?: string }) {
+export function ConversationView({
+  conversation_id,
+}: {
+  conversation_id?: string;
+}) {
   const messages = useChatStore((s) => s.messages);
   const currentStatus = useChatStore((s) => s.currentStatus);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const setMessages = useChatStore((s) => s.setMessages);
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useGetConversationsMessages(conversation_id);
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useGetConversationsMessages(conversation_id);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
   const isPaginatingRef = useRef(false);
@@ -24,31 +33,40 @@ export function ConversationView({ conversation_id }: { conversation_id?: string
     threshold: 0,
   });
 
-  useEffect(function syncMessages() {
-    if (!data) return;
-    const flattened = [...data.pages].reverse().flatMap((page) => {
-      return [...page.data].reverse();
-    });
-    setMessages(flattened);
-  }, [data, setMessages]);
+  useEffect(
+    function syncMessages() {
+      if (!data) return;
+      const flattened = [...data.pages].reverse().flatMap((page) => {
+        return [...page.data].reverse();
+      });
+      setMessages(flattened);
+    },
+    [data, setMessages],
+  );
 
-  useEffect(function loadOlderMessages() {
-    if (topInView && hasNextPage && !isFetchingNextPage) {
+  useEffect(
+    function loadOlderMessages() {
+      if (topInView && hasNextPage && !isFetchingNextPage) {
+        const el = containerRef.current;
+        if (el) prevScrollHeightRef.current = el.scrollHeight;
+        isPaginatingRef.current = true;
+        fetchNextPage();
+      }
+    },
+    [topInView, hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
+
+  useLayoutEffect(
+    function preserveScrollOnPaginate() {
       const el = containerRef.current;
-      if (el) prevScrollHeightRef.current = el.scrollHeight;
-      isPaginatingRef.current = true;
-      fetchNextPage();
-    }
-  }, [topInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  useLayoutEffect(function preserveScrollOnPaginate() {
-    const el = containerRef.current;
-    if (!el || !prevScrollHeightRef.current) return;
-    const diff = el.scrollHeight - prevScrollHeightRef.current;
-    if (diff > 0) el.scrollTop = el.scrollTop + diff - 15;
-    prevScrollHeightRef.current = 0;
-    isPaginatingRef.current = false;
-  }, [messages]);
+      if (!el || !prevScrollHeightRef.current) return;
+      const diff = el.scrollHeight - prevScrollHeightRef.current;
+      if (diff > 0) el.scrollTop = el.scrollTop + diff - 15;
+      prevScrollHeightRef.current = 0;
+      isPaginatingRef.current = false;
+    },
+    [messages],
+  );
 
   if (!!conversation_id && isLoading) {
     return [1, 2, 3, 4, 5].map((item) => {
@@ -59,7 +77,11 @@ export function ConversationView({ conversation_id }: { conversation_id?: string
   if (messages.length === 0) {
     return (
       <AnimatePresence>
-        <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}>
+        <motion.div
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.25 }}
+        >
           <WelcomeHeading />
         </motion.div>
       </AnimatePresence>
@@ -67,7 +89,11 @@ export function ConversationView({ conversation_id }: { conversation_id?: string
   }
 
   return (
-    <ConversationThread ref={containerRef} variant="compact" className="flex-1 thin-scrollbar overflow-y-auto">
+    <ConversationThread
+      ref={containerRef}
+      variant="compact"
+      className="flex-1 thin-scrollbar overflow-y-auto"
+    >
       <div ref={topSentinelRef} />
 
       {isFetchingNextPage && <MessagesLoading />}
@@ -76,9 +102,16 @@ export function ConversationView({ conversation_id }: { conversation_id?: string
         return <ConversationMessage key={msg._id ?? i} message={msg} />;
       })}
 
-      {isStreaming && !currentStatus && <TypingIndicator />}
-      {isStreaming && currentStatus && (
-        <ConversationMessage message={{ role: "system", content: { kind: "text", text: currentStatus } }} />
+      {isStreaming && (
+        <div className="flex items-center gap-2 px-1">
+          <TypingIndicator />
+          {!currentStatus && (
+            <span className="text-xs text-muted-foreground">Loading...</span>
+          )}
+          {currentStatus && (
+            <span className="text-xs text-muted-foreground">{currentStatus}</span>
+          )}
+        </div>
       )}
     </ConversationThread>
   );

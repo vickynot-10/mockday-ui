@@ -1,5 +1,7 @@
 import { api } from "@/utils/axios";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
@@ -64,17 +66,38 @@ export interface DownloadResumeType {
 export function useDownloadResume() {
   return useMutation({
     mutationFn: async ({ type, message_id }: DownloadResumeType) => {
-      const res = await api.post("/ai/download", {
-        type,
-        message_id,
-      });
-
-      return res.data;
+      const res = await api.post(
+        "/ai/download",
+        { type, message_id },
+        { responseType: "blob" },
+      );
+      return res.data as Blob;
     },
 
-    onSuccess: (res: any) => {
-      if (res?.data?.success === true) {
-        window.open(res.data.data.url, "_blank");
+    onSuccess: (blob: Blob, variables) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = variables.type === "pdf" ? "resume.pdf" : "resume.docx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onError: async (error) => {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data;
+
+        if (data instanceof Blob) {
+          const text = await data.text();
+
+          try {
+            const json = JSON.parse(text);
+            toast.error(json.error ?? json.msg ?? "Failed to generate");
+          } catch {
+            toast.error(text ?? "Failed to generate");
+          }
+        }
       }
     },
   });

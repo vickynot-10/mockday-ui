@@ -28,28 +28,34 @@ const ConversationThread = React.forwardRef<
   { variant = "bubbles", className, children, ...props },
   forwardedRef,
 ) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [containerEl, setContainerEl] = React.useState<HTMLDivElement | null>(null);
   const { ref: bottomRef, inView: pinned } = useInView({
     threshold: 0,
-    root: containerRef.current,
+    root: containerEl,
   });
   const childCount = React.Children.count(children);
+  const hasMountedRef = React.useRef(false);
 
   React.useImperativeHandle(forwardedRef, function getContainer() {
-    return containerRef.current as HTMLDivElement;
+    return containerEl as HTMLDivElement;
   });
 
   function scrollToBottom(behavior: ScrollBehavior) {
-    const el = containerRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior });
+    if (!containerEl) return;
+    containerEl.scrollTo({ top: containerEl.scrollHeight, behavior });
   }
 
   React.useEffect(
     function autoScroll() {
+      if (!containerEl) return;
+      if (!hasMountedRef.current) {
+        hasMountedRef.current = true;
+        scrollToBottom("instant");
+        return;
+      }
       if (pinned) scrollToBottom("instant");
     },
-    [childCount],
+    [childCount, containerEl],
   );
 
   function handleJumpToLatest() {
@@ -59,7 +65,7 @@ const ConversationThread = React.forwardRef<
   return (
     <ThreadContext.Provider value={{ variant }}>
       <div
-        ref={containerRef}
+        ref={setContainerEl}
         data-slot="conversation-thread"
         data-variant={variant}
         className={`${THREAD_BASE} ${className ?? ""}`}
@@ -111,17 +117,13 @@ function ConversationMessage({ message }: ConversationMessageProps) {
   const isUser = message.role === "user";
   const isCompact = variant === "compact";
   const isPersisted = Boolean(message._id);
-  const isStreamingText =
-    message.role === "assistant" &&
-    message.content.kind === "text" &&
-    !message._id;
+  
   const [copied, setCopied] = React.useState(false);
   const copyTimeoutRef = React.useRef<
     ReturnType<typeof setTimeout> | undefined
   >(undefined);
 
-  console.log(isStreamingText , message)
-
+  
   React.useEffect(function cleanupCopyTimeout() {
     return function cleanup() {
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
@@ -219,13 +221,12 @@ function ConversationMessage({ message }: ConversationMessageProps) {
 function TypingIndicator() {
   return (
     <div className="flex flex-row gap-2 px-1">
-      <div className="w-4 h-4 rounded-full bg-red-500 animate-bounce" />
-      <div className="w-4 h-4 rounded-full bg-red-500 animate-bounce [animation-delay:-.3s]" />
-      <div className="w-4 h-4 rounded-full bg-red-500 animate-bounce [animation-delay:-.5s]" />
+      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce [animation-delay:-.3s]" />
+      <div className="w-2 h-2 rounded-full bg-accent-foreground animate-bounce [animation-delay:-.5s]" />
     </div>
   );
 }
-
 function BatchResultView({
   content,
   messageId,
