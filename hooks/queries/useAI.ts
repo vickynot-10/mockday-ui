@@ -1,5 +1,5 @@
 import { api } from "@/utils/axios";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
 const PAGE_SIZE = 20;
 
@@ -53,5 +53,29 @@ export function useGetConversations() {
       return allPages.length + 1;
     },
     staleTime: Infinity,
+  });
+}
+
+export interface DownloadResumeType {
+  type: "docx" | "pdf";
+  message_id: string;
+}
+
+export function useDownloadResume() {
+  return useMutation({
+    mutationFn: async ({ type, message_id }: DownloadResumeType) => {
+      const res = await api.post("/ai/download", {
+        type,
+        message_id,
+      });
+
+      return res.data;
+    },
+
+    onSuccess: (res: any) => {
+      if (res?.data?.success === true) {
+        window.open(res.data.data.url, "_blank");
+      }
+    },
   });
 }

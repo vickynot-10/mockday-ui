@@ -32,28 +32,28 @@ export type TextContent = {
   text: string;
 };
 
-export type AssistantContent = TextContent | BatchContent;
+export type MessageContent = TextContent | BatchContent;
 
-export type UserMessage = { role: "user"; content: string; _id?: string };
-export type AssistantMessage = {
-  role: "assistant";
-  content: AssistantContent;
+export type MessageRole = "user" | "assistant" | "system";
+
+export type Message = {
   _id?: string;
+  role: MessageRole;
+  content: MessageContent;
+  fk_resume_id?: string;
+  created_on?: string;
 };
-export type Message = UserMessage | AssistantMessage;
 
 type ChatStore = {
   messages: Message[];
   currentStatus: string | null;
   isStreaming: boolean;
   abortController: AbortController | null;
-  resumeId: string | null;
   addMessage: (msg: Message) => void;
   setMessages: (msgs: Message[]) => void;
   setStatus: (status: string | null) => void;
   setStreaming: (val: boolean) => void;
   setAbortController: (c: AbortController | null) => void;
-  setResumeId: (id: string | null) => void;
 };
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -61,11 +61,19 @@ export const useChatStore = create<ChatStore>((set) => ({
   currentStatus: null,
   isStreaming: false,
   abortController: null,
-  resumeId: null,
-  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
-  setMessages: (msgs) => set({ messages: msgs }),
-  setStatus: (status) => set({ currentStatus: status }),
-  setStreaming: (val) => set({ isStreaming: val }),
-  setAbortController: (c) => set({ abortController: c }),
-  setResumeId: (id) => set({ resumeId: id }),
+  addMessage(msg) {
+    set((s) => ({ messages: [...s.messages, msg] }));
+  },
+  setMessages(msgs) {
+    set({ messages: msgs });
+  },
+  setStatus(status) {
+    set({ currentStatus: status });
+  },
+  setStreaming(val) {
+    set({ isStreaming: val });
+  },
+  setAbortController(c) {
+    set({ abortController: c });
+  },
 }));
