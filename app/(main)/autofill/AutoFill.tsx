@@ -19,7 +19,7 @@ import AppVariantButton from "@/components/common/AppVariantButton";
 import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 import { FormValues } from "@/types/autofill.types";
 import DetailsTab from "./components/DetailsTab";
-import RulesTab from "./components/RulesTab";
+import CustomFieldsTab from "./components/DetailsTab";
 import AboutYouTab from "./components/AboutYou";
 
 const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
@@ -49,6 +49,12 @@ function formatUpdatedOn(dateStr?: string) {
   }).format(new Date(dateStr));
 }
 
+function toValuesArray(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === "string") return raw.trim() === "" ? [] : [raw];
+  return [];
+}
+
 export default function AutoFill() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0].id);
@@ -61,7 +67,7 @@ export default function AutoFill() {
       email: "",
       phone: "",
       experience: [],
-      rules: [{ label: "", answer: "" }],
+      custom_rules: [{ label: "", values: [] }],
       about_you: "",
     },
   });
@@ -83,16 +89,16 @@ export default function AutoFill() {
       ...rest
     } = data.data;
 
-    const rules = Object.entries(rest).map(([label, answer]) => ({
+    const custom_rules = Object.entries(rest).map(([label, values]) => ({
       label,
-      answer: answer as string,
+      values: toValuesArray(values),
     }));
 
     reset({
       email: email ?? "",
       phone: phone ?? "",
       experience: Array.isArray(experience) ? experience : [],
-      rules: rules.length > 0 ? rules : [{ label: "", answer: "" }],
+      custom_rules: custom_rules.length > 0 ? custom_rules : [{ label: "", values: [] }],
       about_you: about_you ?? "",
     });
   }, [data, reset]);
@@ -109,11 +115,14 @@ export default function AutoFill() {
   }
 
   const onSubmit = (data: FormValues) => {
-    const rulesObject = Object.fromEntries(
-      data.rules
-        .map((r) => ({ label: r.label.trim(), answer: r.answer.trim() }))
-        .filter((r) => r.label !== "" || r.answer !== "")
-        .map((r) => [r.label, r.answer]),
+    const customRulesObject = Object.fromEntries(
+      data.custom_rules
+        .map((r) => ({
+          label: r.label.trim(),
+          values: r.values.map((v) => v.trim()).filter(Boolean),
+        }))
+        .filter((r) => r.label !== "" && r.values.length > 0)
+        .map((r) => [r.label, r.values]),
     );
 
     const experiencePayload = data.experience
@@ -130,7 +139,7 @@ export default function AutoFill() {
       phone: data.phone.trim(),
       experience: experiencePayload,
       about_you: data.about_you.trim(),
-      ...rulesObject,
+      ...customRulesObject,
     };
 
     mutate(payload);
@@ -241,7 +250,7 @@ export default function AutoFill() {
                   exit="exit"
                   transition={transition}
                 >
-                  <RulesTab activeTab={activeTab} />
+                  <CustomFieldsTab />
                 </motion.div>
               )}
 
