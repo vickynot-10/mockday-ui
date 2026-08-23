@@ -19,7 +19,10 @@ import AppVariantButton from "@/components/common/AppVariantButton";
 import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 import { FormValues } from "@/types/autofill.types";
 import DetailsTab from "./components/DetailsTab";
-import CustomFieldsTab from "./components/DetailsTab";
+import CustomFieldsTab, {
+  normalizeToken,
+  toDisplayText,
+} from "./components/RulesTab";
 import AboutYouTab from "./components/AboutYou";
 
 const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
@@ -49,9 +52,14 @@ function formatUpdatedOn(dateStr?: string) {
   }).format(new Date(dateStr));
 }
 
+// Backend stores values as either a single underscore token or an array
+// of them; convert to a display-friendly array of spaced text for the UI.
 function toValuesArray(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map(String);
-  if (typeof raw === "string") return raw.trim() === "" ? [] : [raw];
+  if (Array.isArray(raw)) return raw.map((v) => toDisplayText(String(v)));
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    return trimmed === "" ? [] : [toDisplayText(trimmed)];
+  }
   return [];
 }
 
@@ -89,8 +97,11 @@ export default function AutoFill() {
       ...rest
     } = data.data;
 
+    // Keys coming from the backend are underscore tokens (e.g.
+    // "how_did_you_hear_about_us"); show them as normal spaced text in
+    // the form, the underscore form is only ever written back on save.
     const custom_rules = Object.entries(rest).map(([label, values]) => ({
-      label,
+      label: toDisplayText(label),
       values: toValuesArray(values),
     }));
 
@@ -115,11 +126,15 @@ export default function AutoFill() {
   }
 
   const onSubmit = (data: FormValues) => {
+    // Underscore-normalize labels and values only at save time; the form
+    // itself always holds the readable, spaced display text.
     const customRulesObject = Object.fromEntries(
       data.custom_rules
         .map((r) => ({
-          label: r.label.trim(),
-          values: r.values.map((v) => v.trim()).filter(Boolean),
+          label: normalizeToken(r.label),
+          values: r.values
+            .map((v) => normalizeToken(v))
+            .filter(Boolean),
         }))
         .filter((r) => r.label !== "" && r.values.length > 0)
         .map((r) => [r.label, r.values]),
