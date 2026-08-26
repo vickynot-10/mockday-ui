@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { motion, Variants } from "motion/react";
 import { useForm } from "react-hook-form";
-import { ImageIcon, Palette } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,26 +39,14 @@ export default function SignUp() {
 
   return (
     <div className="dark min-h-screen w-full flex items-center justify-center bg-background p-6">
-      <div className="w-full max-w-5xl rounded-3xl border border-border bg-card p-3 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="rounded-3xl border border-border bg-card p-3 shadow-sm">
+        <div className="grid grid-cols-1  gap-3">
           <motion.div
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="flex flex-col justify-center px-8 py-10"
+            className="flex flex-col justify-center px-4 py-10"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              className="mb-6 flex h-9 w-9 items-center justify-center rounded-lg border-2 border-dashed border-primary"
-            >
-              <ImageIcon
-                className="h-4 w-4 text-foreground"
-                strokeWidth={2.5}
-              />
-            </motion.div>
-
             <motion.h1
               variants={fieldVariants}
               custom={0}
@@ -221,7 +208,7 @@ export default function SignUp() {
                     disabled={isPending}
                     className="w-full py-6 text-sm font-semibold"
                   >
-                  {isPending ? "Signing Up..." : "Sign Up"}
+                    {isPending ? "Signing Up..." : "Sign Up"}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -242,27 +229,6 @@ export default function SignUp() {
                 </Link>
               </motion.p>
             </form>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative hidden md:flex items-center justify-center rounded-2xl bg-muted overflow-hidden"
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-64 w-64 rounded-full border border-border/70" />
-              <div className="absolute h-64 w-64 rotate-45 border border-border/70 rounded-full" />
-            </div>
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-background">
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <button
-              type="button"
-              className="absolute bottom-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-card shadow"
-            >
-              <Palette className="h-4 w-4 text-foreground" />
-            </button>
           </motion.div>
         </div>
       </div>
