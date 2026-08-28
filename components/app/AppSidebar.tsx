@@ -77,29 +77,13 @@ export default function AppSidebar() {
   return (
     <Sidebar className="px-0 h-full [&_[data-slot=sidebar-inner]]:h-full">
       <div className="flex flex-col">
-        <SidebarHeader className=" !p-0">
+        {/* <SidebarHeader className=" !p-0">
           <SidebarMenu>
-            <SidebarMenuItem>
-            
-                <div
-                  className="w-[100px] h-[70px] bg-primary"
-                  style={{
-                    maskImage: "url('/app_icon.svg')",
-                    WebkitMaskImage: "url('/app_icon.svg')",
-                    maskRepeat: "no-repeat",
-                    WebkitMaskRepeat: "no-repeat",
-                    maskPosition: "center",
-                    WebkitMaskPosition: "center",
-                    maskSize: "contain",
-                    WebkitMaskSize: "contain",
-                  }}
-                />
-            
-            </SidebarMenuItem>
+            <SidebarMenuItem></SidebarMenuItem>
           </SidebarMenu>
-        </SidebarHeader>
+        </SidebarHeader> */}
 
-        <SidebarContent className="overflow-hidden">
+        <SidebarContent className="overflow-hidden py-4">
           <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="px-4 relative">
               <AnimatePresence mode="wait" initial={false}>
