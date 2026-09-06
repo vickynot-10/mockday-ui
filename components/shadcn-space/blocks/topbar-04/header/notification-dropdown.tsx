@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -9,17 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+import { NOTIFICATION_CONSTANTS } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Headset,
-  LucideIcon,
-  Salad,
-  ScanText,
-  Star,
-  Video,
-} from "lucide-react";
+import { BellRing, CheckCircle2, XCircle, LucideIcon } from "lucide-react";
+import { useGetUserNotifications } from "@/hooks/queries/useNotiications";
+import NotificationsSkeleton from "@/loaders/notification_header.loader";
 
 type Props = {
   trigger: ReactNode;
@@ -27,63 +22,35 @@ type Props = {
   align?: "start" | "center" | "end";
 };
 
-type MenuItem = {
-  textColor: string;
-  bgColor: string;
-  icon: LucideIcon;
-  title: string;
-  desc: string;
-  time: string;
+const STATUS_MAP: Record<
+  number,
+  { icon: LucideIcon; iconColor: string; bgColor: string }
+> = {
+  [NOTIFICATION_CONSTANTS.NOTIFICATION_TYPE.SUCCESS]: {
+    icon: CheckCircle2,
+    iconColor: "stroke-teal-400",
+    bgColor: "bg-teal-400/10",
+  },
+  [NOTIFICATION_CONSTANTS.NOTIFICATION_TYPE.ERROR]: {
+    icon: XCircle,
+    iconColor: "stroke-red-500",
+    bgColor: "bg-red-500/10",
+  },
 };
 
-const PROFILE_ITEMS: MenuItem[] = [
-  {
-    textColor: "stroke-blue-500",
-    bgColor: "bg-blue-500/10",
-    icon: Star,
-    title: "Event Today",
-    desc: "Just reminder that you have to",
-    time: "9:00 AM",
-  },
-  {
-    textColor: "stroke-orange-400",
-    bgColor: "bg-orange-400/10",
-    icon: Video,
-    title: "Team Meeting",
-    desc: "Discuss project updates and next steps",
-    time: "10:00 AM",
-  },
-  {
-    textColor: "stroke-teal-400",
-    bgColor: "bg-teal-400/10",
-    icon: Salad,
-    title: "Lunch Break",
-    desc: "Take a break and recharge",
-    time: "12:30 PM",
-  },
-  {
-    textColor: "stroke-red-500",
-    bgColor: "bg-red-500/10",
-    icon: Headset,
-    title: "Client Call",
-    desc: "Monthly check-in with the client",
-    time: "3:00 PM",
-  },
-  {
-    textColor: "stroke-sky-400",
-    bgColor: "bg-sky-400/10",
-    icon: ScanText,
-    title: "Project Review",
-    desc: "Review project deliverables with client",
-    time: "4:00 PM",
-  },
-];
-
+const formatTime = (isoString: string) =>
+  new Date(isoString).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 const NotificationDropdown = ({
   trigger,
   defaultOpen,
   align = "end",
 }: Props) => {
+  const { data, isLoading } = useGetUserNotifications();
+  const notifications = data?.data ?? [];
+
   return (
     <div className="flex items-center justify-center">
       <DropdownMenu defaultOpen={defaultOpen}>
@@ -94,42 +61,64 @@ const NotificationDropdown = ({
           className="p-0 w-sm rounded-2xl data-open:slide-in-from-top-20! data-closed:slide-out-to-top-20 data-open:fade-in-0 data-closed:fade-out-0 data-closed:zoom-out-100 duration-400"
         >
           <DropdownMenuGroup>
-            {/* title */}
             <DropdownMenuLabel className="flex items-center justify-between p-4">
               <p className="text-base font-medium text-popover-foreground">
                 Notifications
               </p>
-              <Badge className="h-5 font-normal leading-0">5 New</Badge>
             </DropdownMenuLabel>
 
-            {/* Notifications */}
-            {PROFILE_ITEMS.map(
-              ({ bgColor, textColor, icon: Icon, title, desc, time }) => (
-                <DropdownMenuItem
-                  key={title}
-                  className={
-                    "mx-1.5 my-1 p-2 flex items-center justify-between cursor-pointer"
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-2.5 rounded-xl", bgColor)}>
-                      <Icon size={20} className={cn("size-5", textColor)} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-popover-foreground">
-                        {title}
-                      </p>
-                      <p className="max-w-52 truncate text-sm text-muted-foreground">
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{time}</p>
-                </DropdownMenuItem>
-              ),
-            )}
+            {isLoading && <NotificationsSkeleton />}
 
-            {/* button */}
+            {!isLoading &&
+              notifications &&
+              notifications.length > 0 &&
+              notifications.map((item: any) => {
+                const config =
+                  STATUS_MAP[item.status] ??
+                  STATUS_MAP[NOTIFICATION_CONSTANTS.NOTIFICATION_TYPE.SUCCESS];
+                const Icon = config.icon;
+                return (
+                  <DropdownMenuItem
+                    key={item._id}
+                    className="mx-1.5 my-1 p-2 flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn("p-2.5 rounded-xl", config.bgColor)}>
+                        <Icon
+                          size={20}
+                          strokeWidth={2}
+                          className={cn("size-5", config.iconColor)}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-popover-foreground">
+                          {item.msg}
+                        </p>
+                        <p className="max-w-52 truncate text-sm text-muted-foreground">
+                          {item.notes}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTime(item.fired_at)}
+                    </p>
+                  </DropdownMenuItem>
+                );
+              })}
+
+            {!isLoading && notifications.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <BellRing className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <Link
+                  href="/settings/notification-history"
+                  className="text-sm text-muted-foreground"
+                >
+                  No notifications
+                </Link>
+              </div>
+            )}
             <div className="mx-1.5 my-1 p-2">
               <Button className="rounded-xl w-full cursor-pointer hover:bg-primary/80">
                 See All Notifications

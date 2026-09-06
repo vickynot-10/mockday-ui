@@ -1,21 +1,15 @@
-import { Geist, Geist_Mono, Noto_Sans_Georgian } from "next/font/google";
 import "./globals.css";
 import RootWrapper from "@/wrappers/MainWrapper";
 
-const geist = Geist({
+import { Instrument_Serif } from "next/font/google";
+
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-geist",
+  weight: "400",
+  style: "italic",
+  variable: "--font-instrument-serif",
 });
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
-
-const notoGeorgian = Noto_Sans_Georgian({
-  subsets: ["georgian"],
-  variable: "--font-serif",
-});
 
 export default function RootLayout({
   children,
@@ -26,7 +20,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geist.variable} ${geistMono.variable} ${notoGeorgian.variable}`}
+      className={` ${instrumentSerif.variable}`}
     >
       <body className="min-h-full flex flex-col max-w-full overflow-x-clip">
         <RootWrapper>{children}</RootWrapper>

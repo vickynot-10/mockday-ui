@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -17,7 +18,7 @@ import {
   NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ProfileDropdown from "@/components/shadcn-space/blocks/topbar-04/header/dropdown-profile";
+import ProfileDropdown, { getInitials } from "@/components/shadcn-space/blocks/topbar-04/header/dropdown-profile";
 import Sidebar from "@/components/shadcn-space/blocks/topbar-04/header/sidebar";
 import {
   NavDropdown,
@@ -26,6 +27,7 @@ import {
 import NavData from "@/components/shadcn-space/blocks/topbar-04/data";
 import { NavGroup } from "@/components/shadcn-space/blocks/topbar-04/types";
 import NotificationDropdown from "@/components/shadcn-space/blocks/topbar-04/header/notification-dropdown";
+import { useMe } from "@/hooks/useMe";
 
 const BREAKPOINT = 991;
 
@@ -33,11 +35,11 @@ export default function Header() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
+    function handleResize() {
       if (window.innerWidth >= BREAKPOINT) {
         setSheetOpen(false);
       }
-    };
+    }
 
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -45,13 +47,15 @@ export default function Header() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+    const { data } = useMe();
+
+     const name = data?.name;
+  const initials = getInitials(name);
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
-      {/* TOP BAR */}
-      <div className="flex items-center justify-between px-4 py-2.5 max-w-7xl mx-auto">
-        {/* LEFT */}
+      <div className="flex items-center justify-between ">
         <div className="flex items-center gap-3">
-          {/* Mobile Sidebar */}
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger
               id="mobile-sidebar-trigger-04"
@@ -67,8 +71,8 @@ export default function Header() {
               <SheetTitle className="sr-only">customizer</SheetTitle>
 
               <ScrollArea className="h-full">
-                <a
-                  href="#"
+                <Link
+                  href="/"
                   className="p-4 sticky top-0 bg-background z-10 block"
                 >
                   <img
@@ -81,14 +85,14 @@ export default function Header() {
                     alt="logo"
                     className="hidden dark:block w-[160px] h-10"
                   />
-                </a>
+                </Link>
 
                 <Sidebar onLinkClick={() => setSheetOpen(false)} />
               </ScrollArea>
             </SheetContent>
           </Sheet>
 
-          <a href="#">
+          <Link href="/">
             <img
               src="https://images.shadcnspace.com/assets/logo/shadcnspace.svg"
               alt="logo"
@@ -99,10 +103,9 @@ export default function Header() {
               alt="logo"
               className="hidden dark:block w-[160px] h-10"
             />
-          </a>
+          </Link>
         </div>
 
-      
         <div className="hidden lg:flex items-center justify-between">
           <NavigationMenu>
             <NavigationMenuList className="space-x-0">
@@ -120,7 +123,13 @@ export default function Header() {
                 return (
                   <NavigationMenuItem key={item.label}>
                     <NavigationMenuLink
-                      render={<NavButton label={item.label} icon={item.icon} />}
+                      render={
+                        <NavButton
+                          label={item.label}
+                          icon={item.icon}
+                          href={item.href!}
+                        />
+                      }
                     />
                   </NavigationMenuItem>
                 );
@@ -129,7 +138,6 @@ export default function Header() {
           </NavigationMenu>
         </div>
 
-        {/* RIGHT */}
         <div className="flex items-center gap-2">
           <NotificationDropdown
             defaultOpen={false}
@@ -140,7 +148,7 @@ export default function Header() {
               </div>
             }
           />
-         
+
           <ProfileDropdown
             trigger={
               <Button
@@ -151,8 +159,8 @@ export default function Header() {
                 suppressHydrationWarning
               >
                 <Avatar className="size-7 rounded-full">
-                  <AvatarImage src="https://images.shadcnspace.com/assets/profiles/user-11.jpg" />
-                  <AvatarFallback>NJ</AvatarFallback>
+                
+                  <AvatarFallback> {initials } </AvatarFallback>
                 </Avatar>
               </Button>
             }

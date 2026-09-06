@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +40,7 @@ export function NavDropdown({
               <li key={item.label}>
                 <NavigationMenuLink
                   render={
-                    <a
+                    <Link
                       href={item.href}
                       className="flex items-left gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-foreground"
                     >
@@ -47,7 +48,7 @@ export function NavDropdown({
                         <ItemIcon size={16} />
                         <span>{item.label}</span>
                       </div>
-                    </a>
+                    </Link>
                   }
                 />
               </li>
@@ -62,12 +63,18 @@ export function NavDropdown({
 export function NavButton({
   label,
   icon: Icon,
+  href,
 }: {
   label: string;
   icon: LucideIcon;
+  href: string;
 }) {
   return (
-    <Button variant="ghost" className="gap-2 rounded-lg">
+    <Button
+      variant="ghost"
+      className="gap-2 rounded-lg"
+      render={<Link href={href} />}
+    >
       <span className="flex items-center gap-2">
         <Icon size={16} />
         <span className="text-sm">{label}</span>
