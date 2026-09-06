@@ -2,7 +2,6 @@
 import { useState } from "react";
 import BreadCrumbs from "@/components/common/Breadcrumbs";
 import StatusGridSkeleton from "@/loaders/status.loader";
-import Tooltip from "@/components/common/ToolTip";
 import {
   useGetStatus,
   useDeleteStatus,
