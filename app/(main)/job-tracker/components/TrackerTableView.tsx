@@ -57,6 +57,7 @@ export default function JobTrackerTableView({ filters, statuses, onAddStatus }: 
   const { data, isLoading } = useGetTrackers({
     page: pageInfo.page,
     limit: pageInfo.pageSize,
+    type : "table",
     ...filters,
   });
 

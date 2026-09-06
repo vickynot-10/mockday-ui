@@ -14,6 +14,7 @@ type TrackerParams = {
   status?: any;
   from?: string;
   to?: string;
+  type : string;
 };
 
 type StatusParams = {
@@ -26,7 +27,6 @@ export const useGetTrackers = (params: TrackerParams) => {
     queryKey: [QUERY_KEY, params],
     queryFn: async () => {
       const res = await api.get("/trackers", { params });
-
       return res.data ?? null;
     },
     staleTime: 1000 * 60 * 5,
