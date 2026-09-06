@@ -35,6 +35,7 @@ import {
 } from "@/hooks/queries/useTrackers";
 import type { TrackerStatus } from "../JobTracker";
 import { cn } from "@/lib/utils";
+import JobTrackerKanbanSkeleton from "@/loaders/tracker-kanban.loader";
 
 const EMPTY_OBJECT: Record<string, TrackerCard[]> = {};
 
@@ -276,11 +277,7 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
   }
 
   if (isLoading) {
-    return (
-      <div className="text-sm text-muted-foreground py-8 text-center">
-        Loading...
-      </div>
-    );
+    return <JobTrackerKanbanSkeleton />
   }
 
   const columnKeys = Object.keys(columns);
