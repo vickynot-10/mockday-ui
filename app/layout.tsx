@@ -20,9 +20,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={` ${instrumentSerif.variable}`}
+      className={`dark ${instrumentSerif.variable}`}
     >
-      <body className="min-h-full flex flex-col max-w-full overflow-x-clip">
+      <body className="min-h-full flex flex-col  max-w-full overflow-x-clip">
         <RootWrapper>{children}</RootWrapper>
       </body>
     </html>

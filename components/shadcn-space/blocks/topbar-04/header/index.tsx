@@ -53,7 +53,7 @@ export default function Header() {
   const initials = getInitials(name);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background">
+    <header className="sticky top-0 z-50 border-b p-4 bg-[#272a32]">
       <div className="flex items-center justify-between ">
         <div className="flex items-center gap-3">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

@@ -1,5 +1,4 @@
 "use client";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import AppHeader from "@/components/app/AppHeader";
 
 export default function AppWrapper({
@@ -8,9 +7,9 @@ export default function AppWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex h-screen px-4 py-2.5 max-w-[90%]  mx-auto w-full  flex-col">
+    <main className="flex h-screen mx-auto w-full  flex-col">
       <AppHeader />
-      {children}
+      <div className=" px-6 my-3">{children}</div>
     </main>
   );
 }
