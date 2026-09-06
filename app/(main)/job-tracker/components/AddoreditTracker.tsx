@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useGetTrackerByID, useSaveTracker } from "@/hooks/queries/useTrackers";
 import { useGetAllStatus } from "@/hooks/queries/useStatus";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -165,15 +164,11 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
     setActiveTab(newId);
   }
 
-  const breadcrumb_items = [
-    { label: "Apps", isSection: true },
-    { label: "Trackers", href: "/job-tracker" },
-    { label: id ? "Edit" : "Add" },
-  ];
+
 
   return (
     <>
-      <BreadCrumbs items={breadcrumb_items} />
+     
 
       <form
         onSubmit={(e) => e.preventDefault()}

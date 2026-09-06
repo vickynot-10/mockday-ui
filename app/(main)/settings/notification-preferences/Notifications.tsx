@@ -6,7 +6,7 @@ import {
   useSaveNotifications,
   useRegisterPush,
 } from "@/hooks/queries/useNotiications";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
+
 import { waitForOneSignal } from "@/lib/onesignal";
 import { Switch } from "@/components/ui/switch";
 import { useMe } from "@/hooks/useMe";
@@ -24,10 +24,7 @@ import { toast } from "sonner";
 import SendOtpStep from "./components/SendOTP";
 import VerifyOtpStep from "./components/VerifyOTP";
 
-const items = [
-  { label: "Settings", isSection: true },
-  { label: "Notifications" },
-];
+
 
 const otpSteps = [
   { key: "enter_email", label: "Email" },
@@ -153,8 +150,7 @@ export default function Notifications() {
 
   return (
     <>
-      <BreadCrumbs items={items} />
-
+    
       <div className="flex flex-col gap-4 mt-4">
         <div>
           <h2 className="text-lg font-semibold">Reminders</h2>

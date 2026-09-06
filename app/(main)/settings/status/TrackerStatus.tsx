@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
+
 import StatusGridSkeleton from "@/loaders/status.loader";
 import {
   useGetStatus,
@@ -34,10 +34,6 @@ import CreateStatus from "@/components/common/CreateStatus";
 import { NoDataFound } from "@/components/common/AppTable";
 import AppIconButton from "@/components/common/AppIconButton";
 
-const items = [
-  { label: "Settings", isSection: true },
-  { label: "Tracker Status" },
-];
 
 export default function CustomizableStatus() {
   const [search, setSearch] = useState("");
@@ -144,7 +140,7 @@ export default function CustomizableStatus() {
 
   return (
     <>
-      <BreadCrumbs items={items} />
+      
       <div className="flex items-center justify-between my-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />

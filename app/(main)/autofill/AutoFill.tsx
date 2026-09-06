@@ -1,5 +1,4 @@
 "use client";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { useForm, FormProvider } from "react-hook-form";
 import { motion, AnimatePresence } from "motion/react";
 import { Save, Briefcase, ListChecks, CircleUserRound } from "lucide-react";
@@ -22,7 +21,6 @@ import DetailsTab from "./components/DetailsTab";
 import RulesTab from "./components/RulesTab";
 import AboutYouTab from "./components/AboutYou";
 
-const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
 
 const tabs = [
   { id: "details", label: "Default Fields", icon: Briefcase },
@@ -155,7 +153,7 @@ export default function AutoFill() {
   return (
     <>
       <div className="flex items-center justify-between mb-3">
-        <BreadCrumbs items={items} />
+      
         {lastUpdated && (
           <p className="text-sm text-muted-foreground">
             Last updated: {lastUpdated}

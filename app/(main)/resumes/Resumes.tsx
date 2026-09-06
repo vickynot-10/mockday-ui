@@ -1,5 +1,5 @@
 "use client";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
+
 import AppVariantButton from "@/components/common/AppVariantButton";
 import { Download, Loader2, Star, Trash2, Plus } from "lucide-react";
 import ResumeCardSkeleton from "@/loaders/resume.loader";
@@ -32,8 +32,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MAX_RESUMES } from "@/constants";
 import { NoDataFound } from "@/components/common/AppTable";
 import Image from "next/image";
-
-const items = [{ label: "Apps", isSection: true }, { label: "Resumes" }];
 
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleDateString("en-US", {
@@ -110,8 +108,7 @@ export default function Resumes() {
 
   return (
     <>
-      <BreadCrumbs items={items} />
-
+    
       <div className="flex flex-row items-center justify-between mt-4">
         <div className="flex flex-row items-center gap-3">
           {resumes.length > 0 && (

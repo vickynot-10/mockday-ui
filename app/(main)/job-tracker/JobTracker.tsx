@@ -1,5 +1,5 @@
 "use client";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
+
 import useDebounce from "@/hooks/app/useDebounce";
 import { FilterBar } from "@/components/godui/filter-bar";
 import AppliedDateFilter from "@/components/common/DatePicker";
@@ -51,7 +51,6 @@ import CreateStatus from "@/components/common/CreateStatus";
 import AddReminder from "./components/AddReminder";
 
 const EMPTY_ARRAY: never[] = [];
-const items = [{ label: "Apps", isSection: true }, { label: "Trackers" }];
 
 type TrackerStatus = {
   _id: string;
@@ -351,7 +350,7 @@ export default function JobTracker() {
 
   return (
     <>
-      <BreadCrumbs items={items} />
+     
 
       <div className=" flex flex-row items-center justify-between my-4">
         <div className="relative w-full max-w-sm ">

@@ -4,7 +4,6 @@ import {
   useSaveProfileSettings,
 } from "@/hooks/queries/useProfile";
 import { useEffect, useState } from "react";
-import BreadCrumbs from "@/components/common/Breadcrumbs";
 import { AppButton } from "@/components/common/AppButton";
 import { useForm } from "react-hook-form";
 
@@ -16,7 +15,7 @@ export default function Profile() {
 
   return (
     <>
-      <BreadCrumbs items={items} />
+   
     </>
   );
 }

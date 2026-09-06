@@ -1,5 +1,5 @@
 "use client";
-import AppHeader from "@/components/app/AppHeader";
+import Header from "@/components/shadcn-space/blocks/topbar-04/header";
 
 export default function AppWrapper({
   children,
@@ -8,7 +8,7 @@ export default function AppWrapper({
 }) {
   return (
     <main className="flex h-screen mx-auto w-full  flex-col">
-      <AppHeader />
+      <Header />
       <div className=" px-6 my-3">{children}</div>
     </main>
   );
