@@ -1,6 +1,6 @@
 export type FieldRule = {
   label: string;
-  values: string[];
+  answer: string;
 };
 
 export type Experience = {
@@ -14,6 +14,6 @@ export type FormValues = {
   email: string;
   phone: string;
   experience: Experience[];
-  custom_rules: FieldRule[];
+  rules: FieldRule[];
   about_you: string;
 };

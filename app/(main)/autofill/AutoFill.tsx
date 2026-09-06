@@ -19,10 +19,7 @@ import AppVariantButton from "@/components/common/AppVariantButton";
 import { useGetAutoFill, useSaveAutoFill } from "@/hooks/queries/useAutofills";
 import { FormValues } from "@/types/autofill.types";
 import DetailsTab from "./components/DetailsTab";
-import CustomFieldsTab, {
-  normalizeToken,
-  toDisplayText,
-} from "./components/RulesTab";
+import RulesTab from "./components/RulesTab";
 import AboutYouTab from "./components/AboutYou";
 
 const items = [{ label: "Apps", isSection: true }, { label: "Autofills" }];
@@ -52,17 +49,6 @@ function formatUpdatedOn(dateStr?: string) {
   }).format(new Date(dateStr));
 }
 
-// Backend stores values as either a single underscore token or an array
-// of them; convert to a display-friendly array of spaced text for the UI.
-function toValuesArray(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.map((v) => toDisplayText(String(v)));
-  if (typeof raw === "string") {
-    const trimmed = raw.trim();
-    return trimmed === "" ? [] : [toDisplayText(trimmed)];
-  }
-  return [];
-}
-
 export default function AutoFill() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0].id);
@@ -75,7 +61,7 @@ export default function AutoFill() {
       email: "",
       phone: "",
       experience: [],
-      custom_rules: [{ label: "", values: [] }],
+      rules: [{ label: "", answer: "" }],
       about_you: "",
     },
   });
@@ -97,19 +83,15 @@ export default function AutoFill() {
       ...rest
     } = data.data;
 
-    // Keys coming from the backend are underscore tokens (e.g.
-    // "how_did_you_hear_about_us"); show them as normal spaced text in
-    // the form, the underscore form is only ever written back on save.
-    const custom_rules = Object.entries(rest).map(([label, values]) => ({
-      label: toDisplayText(label),
-      values: toValuesArray(values),
+    const rules = Object.entries(rest).map(([label, answer]) => ({
+      label: label.trim().replace(/_/g, " "),
+      answer: answer as string,
     }));
-
     reset({
       email: email ?? "",
       phone: phone ?? "",
       experience: Array.isArray(experience) ? experience : [],
-      custom_rules: custom_rules.length > 0 ? custom_rules : [{ label: "", values: [] }],
+      rules: rules.length > 0 ? rules : [{ label: "", answer: "" }],
       about_you: about_you ?? "",
     });
   }, [data, reset]);
@@ -126,20 +108,15 @@ export default function AutoFill() {
   }
 
   const onSubmit = (data: FormValues) => {
-    // Underscore-normalize labels and values only at save time; the form
-    // itself always holds the readable, spaced display text.
-    const customRulesObject = Object.fromEntries(
-      data.custom_rules
+    const rulesObject = Object.fromEntries(
+      data.rules
         .map((r) => ({
-          label: normalizeToken(r.label),
-          values: r.values
-            .map((v) => normalizeToken(v))
-            .filter(Boolean),
+          label: r.label.trim().replace(/\s+/g, "_"),
+          answer: r.answer.trim(),
         }))
-        .filter((r) => r.label !== "" && r.values.length > 0)
-        .map((r) => [r.label, r.values]),
+        .filter((r) => r.label !== "" || r.answer !== "")
+        .map((r) => [r.label, r.answer]),
     );
-
     const experiencePayload = data.experience
       .filter((e) => e.point.trim() !== "" || e.start_date !== "")
       .map((e) => ({
@@ -154,7 +131,7 @@ export default function AutoFill() {
       phone: data.phone.trim(),
       experience: experiencePayload,
       about_you: data.about_you.trim(),
-      ...customRulesObject,
+      ...rulesObject,
     };
 
     mutate(payload);
@@ -265,7 +242,7 @@ export default function AutoFill() {
                   exit="exit"
                   transition={transition}
                 >
-                  <CustomFieldsTab />
+                  <RulesTab activeTab={activeTab} />
                 </motion.div>
               )}
 
@@ -313,7 +290,8 @@ export default function AutoFill() {
             <DialogTitle>Reset form?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This can't be undone the fields entered will be reset.</p>
+            This can't be undone the fields entered will be reset.
+          </p>
           <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
             <AppVariantButton size="sm" onClick={CloseDialog}>
               Cancel

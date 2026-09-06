@@ -1,282 +1,150 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import {
-  useFormContext,
-  useFieldArray,
-  useWatch,
-  Control,
-  UseFormRegister,
-  UseFormSetValue,
-} from "react-hook-form";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import { motion } from "motion/react";
-import { Plus, Trash2, X, ListPlus } from "lucide-react";
+import { Plus, Trash2, ListPlus } from "lucide-react";
+import { useHotkeys } from "react-hotkeys-hook";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import { FormValues } from "@/types/autofill.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-// Used when persisting to the backend — keeps the existing underscore
-// token format (e.g. "How Did You Hear" -> "how_did_you_hear").
-export function normalizeToken(raw: string) {
-  return raw.trim().toLowerCase().replace(/\s+/g, "_");
-}
+export default function RulesTab({ activeTab }: { activeTab: string }) {
+  const { register, control, formState: { errors } } = useFormContext<FormValues>();
+  const { fields, append, remove } = useFieldArray({ control, name: "rules" });
 
-// Used for anything shown in the UI — turns a stored underscore token
-// back into readable text with spaces (e.g. "how_did_you_hear" ->
-// "how did you hear"), and otherwise just tidies up whitespace.
-export function toDisplayText(raw: string) {
-  return raw
-    .trim()
-    .replace(/_+/g, " ")
-    .replace(/\s+/g, " ");
-}
-
-function ChipsInput({
-  values,
-  onChange,
-  placeholder,
-}: {
-  values: string[];
-  onChange: (values: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function commitDraft() {
-    const cleaned = toDisplayText(draft);
-    if (!cleaned) return;
-    const alreadyExists = values.some(
-      (v) => v.toLowerCase() === cleaned.toLowerCase(),
-    );
-    if (alreadyExists) {
-      setDraft("");
-      return;
-    }
-    onChange([...values, cleaned]);
-    setDraft("");
+  function AddItem() {
+    append({ label: "", answer: "" });
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      commitDraft();
-      return;
-    }
-    if (e.key === "Backspace" && draft === "" && values.length > 0) {
-      onChange(values.slice(0, -1));
-    }
-  }
-
-  function removeChip(index: number) {
-    onChange(values.filter((_, i) => i !== index));
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-input px-2 py-1.5 min-h-10 focus-within:ring-1 focus-within:ring-ring">
-      {values.map((chip, index) => (
-        <span
-          key={`${chip}-${index}`}
-          className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
-        >
-          {chip}
-          <button
-            type="button"
-            onClick={() => removeChip(index)}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </span>
-      ))}
-      <input
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={commitDraft}
-        placeholder={values.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[80px] bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-      />
-    </div>
-  );
-}
-
-function CustomFieldRow({
-  index,
-  control,
-  register,
-  setValue,
-  labelRefs,
-  handleLabelKeyDown,
-  AddCustomField,
-  removeCustomField,
-}: {
-  index: number;
-  control: Control<FormValues>;
-  register: UseFormRegister<FormValues>;
-  setValue: UseFormSetValue<FormValues>;
-  labelRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
-  handleLabelKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  AddCustomField: () => void;
-  removeCustomField: (index: number) => void;
-}) {
-  // useWatch now lives inside its own component instance, so it's called
-  // exactly once per row on every render of that row — no more hooks
-  // being called a variable number of times inside a parent-level .map().
-  const values =
-    useWatch({ control, name: `custom_rules.${index}.values` }) || [];
-
-  const {
-    ref: labelRegisterRef,
-    onBlur: labelRegisterOnBlur,
-    ...labelRegisterProps
-  } = register(`custom_rules.${index}.label` as const);
-
-  function handleLabelBlur(e: React.FocusEvent<HTMLInputElement>) {
-    labelRegisterOnBlur(e);
-    setValue(`custom_rules.${index}.label`, toDisplayText(e.target.value), {
-      shouldDirty: true,
+  function RemoveItem(index: number) {
+    remove(index);
+    requestAnimationFrame(() => {
+      const nextInput = document.querySelector<HTMLInputElement>(`input[name="rules.${index}.label"]`);
+      nextInput?.focus();
     });
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.15 }}
-      className="rounded-lg border border-border p-4 space-y-3"
-    >
-      <div className=" grid grid-cols-2 items-center justify-between">
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-sm text-muted-foreground">Label</Label>
-          <Input
-            {...labelRegisterProps}
-            ref={(node) => {
-              labelRegisterRef(node);
-              labelRefs.current[index] = node;
-            }}
-            onBlur={handleLabelBlur}
-            onKeyDown={handleLabelKeyDown}
-            placeholder="e.g. How Did You Hear About Us?"
-          />
-        </div>
-        <div className="flex justify-end flex-row items-center gap-3">
-          <Button type="button" variant="outline" size="icon" onClick={AddCustomField}>
-            <Plus className="w-4 h-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={() => removeCustomField(index)}
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-sm text-muted-foreground">Possible Answers</Label>
-        <ChipsInput
-          values={values}
-          onChange={(next) =>
-            setValue(`custom_rules.${index}.values`, next, {
-              shouldDirty: true,
-            })
-          }
-          placeholder="Type an answer and press Enter"
-        />
-      </div>
-    </motion.div>
+  useHotkeys(
+    "ctrl+enter",
+    (event) => {
+      event.preventDefault();
+      if (activeTab !== "rules") return;
+      AddItem();
+    },
+    { enableOnFormTags: ["INPUT"], preventDefault: true },
+    [activeTab],
   );
-}
 
-export default function CustomFieldsTab() {
-  const { register, control, setValue } = useFormContext<FormValues>();
-
-  const {
-    fields: customFields,
-    append: appendCustomField,
-    remove: removeCustomField,
-  } = useFieldArray({ control, name: "custom_rules" });
-
-  const labelRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [scrollToIndex, setScrollToIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (scrollToIndex === null) return;
-    const node = labelRefs.current[scrollToIndex];
-    if (node) {
-      node.scrollIntoView({ behavior: "smooth", block: "center" });
-      node.focus();
-    }
-    setScrollToIndex(null);
-  }, [scrollToIndex, customFields.length]);
-
-  function AddCustomField() {
-    const nextIndex = customFields.length;
-    appendCustomField({ label: "", values: [] });
-    setScrollToIndex(nextIndex);
-  }
-
-  function handleLabelKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.ctrlKey && e.key === "Enter") {
-      e.preventDefault();
-      AddCustomField();
-    }
-  }
+  useHotkeys(
+    "ctrl+shift+backspace",
+    (event) => {
+      event.preventDefault();
+      if (activeTab !== "rules") return;
+      const target = event.target as HTMLInputElement;
+      const match = target.name?.match(/^rules\.(\d+)\./);
+      if (!match) return;
+      const index = Number(match[1]);
+      if (fields.length <= 1) return;
+      RemoveItem(index);
+    },
+    { enableOnFormTags: ["INPUT"], preventDefault: true },
+    [activeTab, fields.length],
+  );
 
   return (
-    <div>
+    <>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-lg font-semibold">Field Rules</h2>
-        <AppVariantButton type="button" size="sm" onClick={AddCustomField}>
+        <AppVariantButton type="button" size="sm" onClick={AddItem}>
           <Plus className="w-4 h-4" />
-          Add Field
+          Add Rule
         </AppVariantButton>
       </div>
 
       <p className="text-xs text-muted-foreground mb-4">
-        Add rules for fields the defaults above don't cover — like "How Did You
-        Hear About Us?". For each label, add one or more possible answers in
-        priority order; the extension fills the first match it finds on the
-        page.
+        Use Ctrl + Enter to add an extra row and Ctrl + Shift + Backspace to delete the current row. Don't add passwords or any other sensitive details here.
       </p>
 
-      <div className="space-y-4">
-        {customFields.length <= 0 && (
+      <div className="space-y-3">
+        {fields.length <= 0 && (
           <div className="flex flex-col items-center justify-center gap-6 pb-6 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <ListPlus className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-medium">No field rules added yet</p>
+              <p className="text-sm font-medium">No field rules yet</p>
               <p className="text-sm mt-2 text-muted-foreground">
-                Add a label and possible answers to autofill fields the defaults
-                miss.
+                Add a rule to match labels on job forms to your answers.
               </p>
             </div>
-            <AppVariantButton type="button" size="sm" onClick={AddCustomField}>
+            <AppVariantButton type="button" size="sm" onClick={AddItem}>
               <Plus className="w-4 h-4" />
-              Add Field
+              Add Rule
             </AppVariantButton>
           </div>
         )}
 
-        {customFields.map((field, index) => (
-          <CustomFieldRow
-            key={field.id}
-            index={index}
-            control={control}
-            register={register}
-            setValue={setValue}
-            labelRefs={labelRefs}
-            handleLabelKeyDown={handleLabelKeyDown}
-            AddCustomField={AddCustomField}
-            removeCustomField={removeCustomField}
-          />
-        ))}
+        {fields && fields.length > 0 &&
+          fields.map((field, index) => {
+            const labelError = errors.rules?.[index]?.label;
+            const answerError = errors.rules?.[index]?.answer;
+
+            return (
+              <motion.div
+                key={field.id}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.15 }}
+                className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-start"
+              >
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm text-muted-foreground">Label contains</Label>
+                  <Input
+                    {...register(`rules.${index}.label` as const, {
+                      validate: (value) => (!value?.trim() ? "Field is required" : true),
+                    })}
+                    className={labelError ? "border-destructive" : ""}
+                    placeholder="e.g. LinkedIn"
+                  />
+                  {labelError && <p className="text-xs text-destructive">{labelError.message}</p>}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm text-muted-foreground">Answer</Label>
+                  <Input
+                    {...register(`rules.${index}.answer` as const, {
+                      validate: (value) => (!value?.trim() ? "Field is required" : true),
+                    })}
+                    className={answerError ? "border-destructive" : ""}
+                    placeholder="e.g. linkedin.com/in/you"
+                  />
+                  {answerError && <p className="text-xs text-destructive">{answerError.message}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:flex mt-[26px]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => RemoveItem(index)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={AddItem}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            );
+          })}
       </div>
-    </div>
+    </>
   );
 }
