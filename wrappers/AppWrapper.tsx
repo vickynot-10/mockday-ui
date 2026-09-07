@@ -7,7 +7,7 @@ export default function AppWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex h-screen mx-auto w-full  flex-col">
+    <main className="flex h-screen mx-auto w-full bg-[#17181f]  flex-col">
       <Header />
       <div className=" px-6 my-3">{children}</div>
     </main>

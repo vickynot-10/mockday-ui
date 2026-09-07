@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { cn } from "@/lib/utils";
 
 type TooltipSide = "top" | "bottom" | "right" | "left";
 

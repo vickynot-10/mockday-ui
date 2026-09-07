@@ -1,15 +1,13 @@
 import "./globals.css";
 import RootWrapper from "@/wrappers/MainWrapper";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
-import { Instrument_Serif } from "next/font/google";
-
-const instrumentSerif = Instrument_Serif({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: "400",
-  style: "italic",
-  variable: "--font-instrument-serif",
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-jakarta",
 });
-
 
 export default function RootLayout({
   children,
@@ -20,9 +18,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`dark ${instrumentSerif.variable}`}
+      className={`dark ${plusJakartaSans.variable} bg-[#17181f]`}
     >
-      <body className="min-h-full flex flex-col  max-w-full overflow-x-clip">
+      <body className="min-h-full flex flex-col max-w-full overflow-x-clip">
         <RootWrapper>{children}</RootWrapper>
       </body>
     </html>

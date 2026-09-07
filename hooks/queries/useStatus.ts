@@ -73,19 +73,3 @@ export const useGetAllStatus = () => {
   });
 };
 
-export function useToggleDashboard() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: boolean }) => {
-      const res = await api.patch(`/status/toggle-dashboard`, { id, status });
-      return res.data;
-    },
-    onSuccess: (res :any) => {
-       if (res.success) {
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-          toast.success(res?.msg ?? "Dashboard visibility updated");
-        }
-      
-    },
-  });
-}

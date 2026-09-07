@@ -6,7 +6,6 @@ import {
   useGetStatus,
   useDeleteStatus,
   useSetAsDefault,
-  useToggleDashboard,
 } from "@/hooks/queries/useStatus";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -34,7 +33,6 @@ import CreateStatus from "@/components/common/CreateStatus";
 import { NoDataFound } from "@/components/common/AppTable";
 import AppIconButton from "@/components/common/AppIconButton";
 
-
 export default function CustomizableStatus() {
   const [search, setSearch] = useState("");
   const search_term = useDebounce(search, 500);
@@ -49,16 +47,6 @@ export default function CustomizableStatus() {
     isPending: settingDefault,
     variables: settingDefaultId,
   } = useSetAsDefault();
-
-  const {
-    mutate: toggleDashboard,
-    isPending: togglingDashboard,
-    variables: togglingDashboardId,
-  } = useToggleDashboard();
-
-  function isTogglingDashboard(id: string) {
-    return togglingDashboard && togglingDashboardId?.id === id;
-  }
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -84,14 +72,6 @@ export default function CustomizableStatus() {
     );
   }
 
-  function handleToggleDashboard(
-    id: string,
-    e: React.MouseEvent,
-    currentValue: boolean,
-  ) {
-    e.stopPropagation();
-   toggleDashboard({ id, status: !Boolean(currentValue) });
-  }
   function handleChipClick(status: any) {
     if (selectMode) {
       toggleSelect(status._id);
@@ -140,7 +120,6 @@ export default function CustomizableStatus() {
 
   return (
     <>
-      
       <div className="flex items-center justify-between my-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
@@ -216,7 +195,7 @@ export default function CustomizableStatus() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.15 }}
-                  onClick={() => handleChipClick(status)}
+                   onClick={() => handleChipClick(status)}
                   className={cn(
                     "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors overflow-hidden",
                     isSelected
@@ -239,7 +218,7 @@ export default function CustomizableStatus() {
                       <span className="text-sm font-medium text-foreground truncate">
                         {status.name}
                       </span>
-                      {status.isDefault && (
+                      {status.default && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
                           Default
                         </span>
@@ -273,38 +252,13 @@ export default function CustomizableStatus() {
 
                       <AppIconButton
                         size="icon"
-                        tooltip={
-                          status.show_in_dashboard
-                            ? "Remove from Dashboard"
-                            : "Show in Dashboard"
-                        }
-                        onClick={(e) =>
-                          handleToggleDashboard(
-                            status._id,
-                            e,
-                            status.show_in_dashboard,
-                          )
-                        }
-                        disabled={isTogglingDashboard(status._id)}
-                        icon={
-                          <LayoutDashboard
-                            className={cn(
-                              status.show_in_dashboard &&
-                                "fill-current text-primary",
-                            )}
-                          />
-                        }
-                      />
-
-                      <AppIconButton
-                        size="icon"
                         tooltip="Edit"
                         onClick={(e) => {
                           e.stopPropagation();
                           openEdit(status);
                         }}
                         disabled={
-                          status.default || isSettingDefault(status._id)
+                          isSettingDefault(status._id)
                         }
                         icon={<Pencil />}
                       />

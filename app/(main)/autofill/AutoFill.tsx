@@ -152,10 +152,10 @@ export default function AutoFill() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-end mb-3">
       
         {lastUpdated && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-end text-muted-foreground">
             Last updated: {lastUpdated}
           </p>
         )}
@@ -260,7 +260,7 @@ export default function AutoFill() {
             </AnimatePresence>
           </div>
 
-          <div className="sticky bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur py-4 flex justify-end gap-2">
+          <div className="sticky bottom-0 left-0 right-0  py-4 flex justify-end gap-2 w-full">
             <AppVariantButton
               type="button"
               onClick={OpenDialog}
