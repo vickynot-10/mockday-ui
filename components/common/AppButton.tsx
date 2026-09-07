@@ -17,6 +17,7 @@ interface MultiStateSendButtonProps extends Omit<
   onSend?: () => void;
   icon?: LucideIcon;
   isLoading?: boolean;
+  variant?: "primary" | "secondary";
 }
 
 const AppButton = React.forwardRef<
@@ -33,6 +34,7 @@ const AppButton = React.forwardRef<
       onSend,
       icon: Icon,
       isLoading,
+      variant = "primary",
       className,
       onClick,
       disabled,
@@ -40,8 +42,8 @@ const AppButton = React.forwardRef<
     },
     ref,
   ) => {
-    const [internalStatus, setInternalStatus] = React.useState<
-      "idle" | "loading" | "success"
+    const [internalStatus, setInternalStatus] = React.useState
+      <"idle" | "loading" | "success"
     >("idle");
 
     const status =
@@ -74,6 +76,33 @@ const AppButton = React.forwardRef<
       if (onClick) onClick(e);
     };
 
+    // Secondary: static button, no loading/success animation state machine
+    if (variant === "secondary") {
+      return (
+        <motion.button
+          ref={ref}
+          onClick={onClick}
+          disabled={disabled}
+          whileHover={{ scale: disabled ? 1 : 1.02 }}
+          whileTap={{ scale: disabled ? 1 : 0.97 }}
+          className={cn(
+            "group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-xl px-1 py-3 font-medium text-sm transition-all duration-300 select-none outline-none min-w-44 border",
+            "bg-[#41444e] text-white border-[#41444e] hover:bg-[#4b4e59] cursor-pointer",
+            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed! disabled:opacity-60",
+            className,
+          )}
+          {...props}
+        >
+          <span className="relative z-10 flex items-center gap-2 font-medium">
+            {Icon && <Icon className="size-4 text-white" />}
+            <span>{idleLabel}</span>
+          </span>
+        </motion.button>
+      );
+    }
+
+    // Primary: full animated state machine
     return (
       <motion.button
         ref={ref}
@@ -84,10 +113,10 @@ const AppButton = React.forwardRef<
         className={cn(
           "group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-xl px-1 py-3 font-medium text-sm transition-all duration-300 select-none outline-none min-w-44 border",
           status === "idle"
-            ? "bg-background text-foreground border-border hover:text-primary hover:bg-muted dark:hover:bg-input/50 cursor-pointer"
+            ? "bg-[#1cbe8e] text-white border-[#1cbe8e] hover:bg-[#19aa7d] cursor-pointer"
             : status === "success"
-              ? "bg-primary text-primary-foreground border-primary cursor-not-allowed!"
-              : "bg-background text-foreground border-border cursor-not-allowed!",
+              ? "bg-[#1cbe8e] text-white border-[#1cbe8e] cursor-not-allowed!"
+              : "bg-[#1cbe8e] text-white border-[#1cbe8e] cursor-not-allowed!",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           "disabled:cursor-not-allowed!",
           disabled && "opacity-60",
@@ -106,7 +135,7 @@ const AppButton = React.forwardRef<
               className="relative z-10 flex items-center gap-2 font-medium"
             >
               {Icon && (
-                <Icon className="size-4 text-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <Icon className="size-4 text-white transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               )}{" "}
               <span>{idleLabel}</span>
             </motion.span>
@@ -119,7 +148,7 @@ const AppButton = React.forwardRef<
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="relative z-10 flex items-center gap-2 font-medium text-primary"
+              className="relative z-10 flex items-center gap-2 font-medium text-white"
             >
               <Loader2 className="size-4 animate-spin" />
               <span>{loadingLabel}</span>
@@ -133,7 +162,7 @@ const AppButton = React.forwardRef<
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ type: "spring", stiffness: 350, damping: 22 }}
-              className="relative z-10 flex items-center gap-2 font-medium"
+              className="relative z-10 flex items-center gap-2 font-medium text-white"
             >
               <Check className="size-4 stroke-[2.5]" />
               <span>{successLabel}</span>

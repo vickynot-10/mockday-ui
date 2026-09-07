@@ -74,7 +74,8 @@ export default function AddReminder({
 }: AddReminderProps) {
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [isDataFOund, setDataFound] = useState(false);
-const { data, isLoading, refetch, isFetching } = useRemindersTrackers(trackerId);
+  const { data, refetch, isFetching } =
+    useRemindersTrackers(trackerId);
 
 useEffect(() => {
   if (!open) {
@@ -91,6 +92,15 @@ useEffect(() => {
     if (res?.success && res?.data) {
       setDataFound(true);
       reset(res.data);
+    } else {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 2);
+      reset({
+        fk_tracker_id: trackerId,
+        date: now.toISOString(),
+        time: format(now, "HH:mm"),
+        note: "",
+      });
     }
   });
 }, [open]);
@@ -121,11 +131,6 @@ useEffect(() => {
     reset(data.data);
   }, [data]);
 
-  useEffect(() => {
-    if (open) return;
-    setDataFound(false);
-    reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
-  }, [open]);
 
   const minTime =
     new Date().toDateString() === today.toDateString()
@@ -170,7 +175,7 @@ useEffect(() => {
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={false} >
+      <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="flex flex-1 items-center gap-2">
@@ -297,14 +302,15 @@ useEffect(() => {
             </div>
 
             <DialogFooter className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 min-w-30"
+              <AppButton
+                variant="secondary"
                 onClick={CloseModal}
-              >
-                Cancel
-              </Button>
+                type="button"
+                disabled={isPending}
+                idleLabel="Cancel"
+                className="h-10 min-w-30"
+              />
+
               <AppButton
                 type="submit"
                 isLoading={isPending}

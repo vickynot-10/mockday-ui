@@ -9,7 +9,7 @@ export default function AppWrapper({
   return (
     <main className="flex h-screen mx-auto w-full bg-[#17181f]  flex-col">
       <Header />
-      <div className=" px-6 my-3">{children}</div>
+      <div className=" px-6 my-3 flex-1">{children}</div>
     </main>
   );
 }

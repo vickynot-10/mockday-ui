@@ -261,13 +261,13 @@ export default function AutoFill() {
           </div>
 
           <div className="sticky bottom-0 left-0 right-0  py-4 flex justify-end gap-2 w-full">
-            <AppVariantButton
+            <AppButton
               type="button"
+              variant="secondary"
+              idleLabel="Reset"
+              
               onClick={OpenDialog}
-              className="h-11 px-4"
-            >
-              Reset
-            </AppVariantButton>
+            />
 
             <AppButton
               type="submit"
@@ -276,7 +276,7 @@ export default function AutoFill() {
               idleLabel="Save Changes"
               loadingLabel="Saving..."
               successLabel="Saved Successfully!"
-              className="h-11 py-0"
+              
             />
           </div>
         </form>
