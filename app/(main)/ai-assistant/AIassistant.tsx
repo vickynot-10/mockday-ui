@@ -1,9 +1,8 @@
-
 "use client";
 import { PromptComposer } from "./components/prompt-composer";
 import { ConversationView } from "./components/ConverstaionView";
 import { useChatStore } from "@/stores/chat.store";
-
+import ConversationList from "@/components/common/ConversationList";
 
 export default function AIAssistant({
   conversation_id,
@@ -15,7 +14,9 @@ export default function AIAssistant({
   return (
     <div
       className={`flex  flex-col h-full w-full flex-1 min-h-0 transition-all duration-300 ${
-        (hasStarted || conversation_id) ? "justify-end" : "justify-center items-center m-auto"
+        hasStarted || conversation_id
+          ? "justify-end"
+          : "justify-center items-center m-auto"
       }`}
     >
       <ConversationView conversation_id={conversation_id} />
