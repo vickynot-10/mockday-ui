@@ -1,7 +1,7 @@
 "use client";
-
+import AppIconButton from "./AppIconButton";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 import { motion } from "motion/react";
@@ -24,16 +24,17 @@ export default function ConversationList() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const router = useRouter()
+  function NewChat(){
+    router.push("/ai-assistant")
+  }
+
   return (
     <div className="flex h-full w-[280px] flex-col bg-[#1c1d27]">
       <div className="flex items-center justify-end px-3 py-3">
+        <AppIconButton onClick={NewChat} side="bottom" icon={
+          <MessageSquarePlus size={16} />} tooltip="New Chat"  />
         
-        <Link
-          href="/ai-assistant"
-          className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <MessageSquarePlus size={16} />
-        </Link>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-2">

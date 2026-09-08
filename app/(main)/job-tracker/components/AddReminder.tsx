@@ -74,36 +74,35 @@ export default function AddReminder({
 }: AddReminderProps) {
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [isDataFOund, setDataFound] = useState(false);
-  const { data, refetch, isFetching } =
-    useRemindersTrackers(trackerId);
+  const { data, refetch, isFetching } = useRemindersTrackers(trackerId);
 
-useEffect(() => {
-  if (!open) {
+  useEffect(() => {
+    if (!open) {
+      setDataFound(false);
+      reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
+      return;
+    }
+
     setDataFound(false);
     reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
-    return;
-  }
 
-  setDataFound(false);
-  reset({ fk_tracker_id: trackerId, date: "", time: "", note: "" });
-
-  refetch().then((result) => {
-    const res = result.data;
-    if (res?.success && res?.data) {
-      setDataFound(true);
-      reset(res.data);
-    } else {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + 2);
-      reset({
-        fk_tracker_id: trackerId,
-        date: now.toISOString(),
-        time: format(now, "HH:mm"),
-        note: "",
-      });
-    }
-  });
-}, [open]);
+    refetch().then((result) => {
+      const res = result.data;
+      if (res?.success && res?.data) {
+        setDataFound(true);
+        reset(res.data);
+      } else {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 2);
+        reset({
+          fk_tracker_id: trackerId,
+          date: now.toISOString(),
+          time: format(now, "HH:mm"),
+          note: "",
+        });
+      }
+    });
+  }, [open]);
   const { mutate, isPending } = useSaveRemindersTrackers();
   const { mutate: remove, isPending: removing } = useRemoveRemindersTrackers();
 
@@ -131,7 +130,6 @@ useEffect(() => {
     reset(data.data);
   }, [data]);
 
-
   const minTime =
     new Date().toDateString() === today.toDateString()
       ? format(new Date(), "HH:mm")
@@ -150,11 +148,27 @@ useEffect(() => {
   }
 
   function onSubmit(values: ReminderFormValues) {
-    mutate(values, {
-      onSuccess: () => {
-        CloseModal();
+    const picked_date = new Date(values.date);
+    const [hours, minutes] = values.time.split(":").map(Number);
+
+    const reminder_at = new Date(
+      picked_date.getFullYear(),
+      picked_date.getMonth(),
+      picked_date.getDate(),
+      hours,
+      minutes,
+      0,
+      0,
+    );
+
+    mutate(
+      { ...values, reminder_at_utc: reminder_at.toISOString() },
+      {
+        onSuccess: () => {
+          CloseModal();
+        },
       },
-    });
+    );
   }
 
   function handleDateChange(

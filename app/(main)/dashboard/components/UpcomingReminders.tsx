@@ -1,25 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import {
   BellOff,
+  CalendarX,
   ExternalLink,
   Building2,
   Clock3,
@@ -62,57 +50,102 @@ function isValidColor(color?: string | null) {
   );
 }
 
-export default function UpcomingReminders({ data }: { data: Reminder[] }) {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-  const [count, setCount] = useState(0);
+function formatDateKey(date: Date) {
+  return format(date, "yyyy-MM-dd");
+}
 
-  useEffect(() => {
-    if (!api) return;
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
-    });
-  }, [api]);
+function groupRemindersByDate(data: Reminder[]) {
+  const grouped: Record<string, Reminder[]> = {};
+  for (const item of data) {
+    const key = formatDateKey(new Date(item.reminder_at));
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(item);
+  }
+  return grouped;
+}
+
+export default function UpcomingReminders({ data }: { data: Reminder[] }) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    data[0] ? new Date(data[0].reminder_at) : new Date()
+  );
 
   if (!data.length) {
     return (
-      <Card className="h-[400px] flex flex-col">
-        <CardHeader>
-          <CardTitle>Upcoming Reminders</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+      <div className="h-[400px] flex flex-col rounded-lg border border-border p-4">
+        <h3 className="text-sm font-semibold">Upcoming Reminders</h3>
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
           <BellOff className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">No reminders found</p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
+  const remindersByDate = groupRemindersByDate(data);
+  const selectedKey = selectedDate ? formatDateKey(selectedDate) : null;
+  const selectedReminders = selectedKey ? remindersByDate[selectedKey] ?? [] : [];
+
   return (
-    <Card className="h-[400px] flex flex-col">
-      <CardHeader>
-        <CardTitle>Upcoming Reminders</CardTitle>
-      </CardHeader>
+    <div className="flex flex-col rounded-lg border border-border p-4">
+      <h3 className="text-sm font-semibold mb-4">Upcoming Reminders</h3>
 
-      <CardContent className="flex flex-1 flex-col justify-center">
-        <Carousel setApi={setApi} className="w-full">
-          <CarouselContent>
-            {data.map((item) => {
-              const reminderDate = new Date(item.reminder_at);
-              const appliedDate = item.applied_on ? new Date(item.applied_on) : null;
-              const visibleNotes = normalizeNotes(item.company_notes).slice(0, 5);
-              const hasUrl = !!item.company_url;
-              const jobTitle = resolveTitle(item);
-              const hasStatus = !!item.status_name;
-              const statusColor = isValidColor(item.status_color)
-                ? (item.status_color as string)
-                : "var(--chart-1)";
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Left side: Calendar */}
+        <div className="md:w-auto shrink-0 flex justify-center md:border-r md:border-border md:pr-4">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            showOutsideDays={false}
+            className="[--cell-size:--spacing(12)]"
+            components={{
+              DayButton: ({ children, modifiers, day, ...props }) => {
+                const dayReminders = remindersByDate[formatDateKey(day.date)] ?? [];
+                const hasReminder = dayReminders.length > 0;
+                const dotColor =
+                  hasReminder && isValidColor(dayReminders[0].status_color)
+                    ? (dayReminders[0].status_color as string)
+                    : "var(--chart-1)";
 
-              return (
-                <CarouselItem key={item._id}>
-                
+                return (
+                  <CalendarDayButton day={day} modifiers={modifiers} {...props}>
+                    <span className="text-xs font-medium leading-none">{children}</span>
+                    {hasReminder && (
+                      <span
+                        className="h-1 w-1 rounded-full"
+                        style={{ backgroundColor: dotColor }}
+                      />
+                    )}
+                  </CalendarDayButton>
+                );
+              },
+            }}
+          />
+        </div>
+
+        {/* Right side: Reminders list */}
+        <div className="flex-1 min-w-0 max-h-[420px] overflow-y-auto">
+          {selectedReminders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 text-center py-10">
+              <CalendarX className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                No reminders on this date
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {selectedReminders.map((item) => {
+                const appliedDate = item.applied_on ? new Date(item.applied_on) : null;
+                const visibleNotes = normalizeNotes(item.company_notes).slice(0, 5);
+                const hasUrl = !!item.company_url;
+                const jobTitle = resolveTitle(item);
+                const hasStatus = !!item.status_name;
+                const statusColor = isValidColor(item.status_color)
+                  ? (item.status_color as string)
+                  : "var(--chart-1)";
+
+                return (
+                  <div key={item._id} className="rounded-lg border border-border p-3">
                     <div className="flex gap-4">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/30 bg-primary/10">
                         {item.company_img ? (
@@ -177,11 +210,11 @@ export default function UpcomingReminders({ data }: { data: Reminder[] }) {
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-md bg-background/60 border border-border/60 px-3 py-2">
-                      <p className="text-sm text-foreground leading-snug">
-                        {item.note}
-                      </p>
-                    </div>
+                    {item.note && (
+                      <div className="mt-4 rounded-md bg-background/60 border border-border/60 px-3 py-2">
+                        <p className="text-sm text-foreground leading-snug">{item.note}</p>
+                      </div>
+                    )}
 
                     {visibleNotes.length > 0 && (
                       <div className="mt-3 rounded-md border border-border/60 px-3 py-2">
@@ -205,7 +238,7 @@ export default function UpcomingReminders({ data }: { data: Reminder[] }) {
                     <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
                       <span className="flex items-center gap-1.5 rounded-full bg-orange-500/10 px-2.5 py-1 font-medium text-orange-500">
                         <Clock3 className="h-3.5 w-3.5" />
-                        {format(reminderDate, "MMM d, hh:mm a")}
+                        {format(new Date(item.reminder_at), "MMM d, hh:mm a")}
                       </span>
                       {appliedDate && (
                         <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-500">
@@ -214,33 +247,13 @@ export default function UpcomingReminders({ data }: { data: Reminder[] }) {
                         </span>
                       )}
                     </div>
-                
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-          <CarouselPrevious className="cursor-pointer" />
-          <CarouselNext className="cursor-pointer" />
-        </Carousel>
-
-        <div className="mt-6 flex justify-center gap-2">
-          {Array.from({ length: count }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => api?.scrollTo(index)}
-              className={cn(
-                "h-2 rounded-full transition-all duration-300 cursor-pointer",
-                {
-                  "bg-primary w-6": index + 1 === current,
-                  "bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50":
-                    index + 1 !== current,
-                }
-              )}
-              aria-label={`Slide ${index + 1}`}
-            />
-          ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,5 +1,4 @@
 "use client";
-
 import { ComponentProps, useEffect, useState } from "react";
 import {
   Kanban,
@@ -34,7 +33,6 @@ import {
   useDeleteTrackers,
 } from "@/hooks/queries/useTrackers";
 import type { TrackerStatus } from "../JobTracker";
-import { cn } from "@/lib/utils";
 import JobTrackerKanbanSkeleton from "@/loaders/tracker-kanban.loader";
 
 const EMPTY_OBJECT: Record<string, TrackerCard[]> = {};

@@ -409,7 +409,7 @@ export function PromptComposer({ conversation_id }: { conversation_id?: string }
         </div>
       </form>
 
-      <p className="px-2 text-[11px] text-muted-foreground text-left self-start">
+      <p className="px-2 my-3 text-[11px] text-muted-foreground text-left self-start">
         Start typing &quot;/&quot; to see helper commands
       </p>
     </>

@@ -15,6 +15,14 @@ import CreateStatus from "@/components/common/CreateStatus";
 import ViewToggleButtonGroup from "./components/ViewToggle";
 import JobTrackerTableView from "./components/TrackerTableView";
 
+import ReminderFilterButton from "./components/ReminderButton";
+
+const REMINDER_TOOLTIP = {
+  0: "All",
+  1: "Only with reminder",
+  2: "No reminder",
+} as const;
+
 const EMPTY_ARRAY: never[] = [];
 
 export type TrackerStatus = {
@@ -50,6 +58,7 @@ export default function JobTracker() {
     to,
     sort,
     toggleSort,
+    reminder,toggleReminder
   } = useTrackerFilters();
 
   const { data: statusData } = useGetAllStatus();
@@ -66,7 +75,7 @@ export default function JobTracker() {
     [statuses],
   );
 
-  const trackerFilters = { sort, search: search_term, status, from, to };
+  const trackerFilters = { sort, search: search_term, status, from, to , reminder};
 
   return (
     <>
@@ -101,7 +110,14 @@ export default function JobTracker() {
             className="h-9 w-9"
             onClick={toggleSort}
           />
-
+<AppIconButton
+  icon={<ReminderFilterButton value={reminder} />}
+  variant="outline"
+  tooltip={REMINDER_TOOLTIP[reminder]}
+  size="icon"
+  className="h-9 w-9"
+  onClick={toggleReminder}
+/>
           <AppliedDateFilter value={dateRange} onApply={setDateRange} />
 
           <FilterBar

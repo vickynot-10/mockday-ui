@@ -1,6 +1,5 @@
 "use client";
 import { useDashboardGetData } from "@/hooks/queries/useDashboard";
-import StatusPieChart from "./components/Piechart";
 import UpcomingReminders from "./components/UpcomingReminders";
 import TrackerBarChart from "./components/Barchart";
 import StatsCard from "./components/StatsCard";
@@ -10,6 +9,7 @@ import {
   StatsCardLoader,
   UpcomingRemindersLoader,
 } from "@/loaders/dashboard.loader";
+import StatusBreakdown from "./components/StatusBreakdown";
 const EMPTY_ARRAY: never[] = [];
 const ZERO = 0;
 
@@ -43,7 +43,7 @@ export default function Dashboard() {
         {isLoading ? (
           <StatusPieChartLoader />
         ) : (
-          <StatusPieChart data={pie_chart} />
+          <StatusBreakdown data={pie_chart} />
         )}
       </div>
     </div>
