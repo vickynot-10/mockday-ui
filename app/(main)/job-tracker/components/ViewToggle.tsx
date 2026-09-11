@@ -4,9 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { KanbanSquare, Table2Icon } from "lucide-react";
-import { motion } from "motion/react";
-
-const kanbanVariants = {
+import { motion ,type Variants } from "motion/react";
+const kanbanVariants :Variants= {
   active: {
     scale: 1.1,
     y: [0, -1, 1, -1, 0],
@@ -31,7 +30,7 @@ const kanbanVariants = {
   },
 };
 
-const tableVariants = {
+const tableVariants :Variants= {
   active: {
     scale: 1.1,
     rotate: [0, -10, 10, -8, 8, 0],

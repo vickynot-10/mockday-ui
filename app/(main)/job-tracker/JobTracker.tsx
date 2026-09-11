@@ -15,7 +15,10 @@ import CreateStatus from "@/components/common/CreateStatus";
 import ViewToggleButtonGroup from "./components/ViewToggle";
 import JobTrackerTableView from "./components/TrackerTableView";
 
-import ReminderFilterButton from "./components/ReminderButton";
+import {
+  ReminderFilterButton,
+  SortFilterButton,
+} from "./components/ButtonElements";
 
 const REMINDER_TOOLTIP = {
   0: "All",
@@ -58,7 +61,8 @@ export default function JobTracker() {
     to,
     sort,
     toggleSort,
-    reminder,toggleReminder
+    reminder,
+    toggleReminder,
   } = useTrackerFilters();
 
   const { data: statusData } = useGetAllStatus();
@@ -75,7 +79,14 @@ export default function JobTracker() {
     [statuses],
   );
 
-  const trackerFilters = { sort, search: search_term, status, from, to , reminder};
+  const trackerFilters = {
+    sort,
+    search: search_term,
+    status,
+    from,
+    to,
+    reminder,
+  };
 
   return (
     <>
@@ -103,21 +114,21 @@ export default function JobTracker() {
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center my-4 gap-3">
           <AppIconButton
-            icon={<ArrowUpDown className="h-4 w-4" />}
+            icon={<SortFilterButton value={sort} />}
             variant="outline"
             tooltip={sort === "-1" ? "Newest first" : "Oldest first"}
             size="icon"
             className="h-9 w-9"
             onClick={toggleSort}
           />
-<AppIconButton
-  icon={<ReminderFilterButton value={reminder} />}
-  variant="outline"
-  tooltip={REMINDER_TOOLTIP[reminder]}
-  size="icon"
-  className="h-9 w-9"
-  onClick={toggleReminder}
-/>
+          <AppIconButton
+            icon={<ReminderFilterButton value={reminder} />}
+            variant="outline"
+            tooltip={REMINDER_TOOLTIP[reminder]}
+            size="icon"
+            className="h-9 w-9"
+            onClick={toggleReminder}
+          />
           <AppliedDateFilter value={dateRange} onApply={setDateRange} />
 
           <FilterBar
@@ -138,9 +149,9 @@ export default function JobTracker() {
           onAddStatus={() => setOpenModal(true)}
         />
       )}
-      {
-        view === "kanban" && <JobTrackerKanbanView filters={trackerFilters} statuses={statuses} />
-      }
+      {view === "kanban" && (
+        <JobTrackerKanbanView filters={trackerFilters} statuses={statuses} />
+      )}
 
       <CreateStatus open={openModal} onOpenChange={setOpenModal} />
     </>
