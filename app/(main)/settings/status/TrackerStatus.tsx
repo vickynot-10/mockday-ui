@@ -21,16 +21,15 @@ import {
   Pencil,
   Trash2,
   Search,
-  X,
+  Check,
   Star,
-  LayoutDashboard,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
 import { cn } from "@/lib/utils";
 import CreateStatus from "@/components/common/CreateStatus";
-import { NoDataFound } from "@/components/common/AppTable";
 import AppIconButton from "@/components/common/AppIconButton";
 
 export default function CustomizableStatus() {
@@ -120,29 +119,37 @@ export default function CustomizableStatus() {
 
   return (
     <>
-      <div className="flex items-center justify-between my-4">
+      <div className="flex items-center justify-between gap-3 mb-5">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => searchStatus(e.target.value)}
             placeholder="Search Status"
-            className="pl-9"
+            className="pl-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          {selectMode && selectedIds.length > 0 && (
-            <AppVariantButton
-              variant="danger"
-              size="sm"
-              className="flex flex-row items-center gap-2"
-              onClick={() => openDeleteConfirm(selectedIds)}
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete {selectedIds.length} selected
-            </AppVariantButton>
-          )}
+        <div className="flex items-center gap-2 shrink-0">
+          <AnimatePresence>
+            {selectMode && selectedIds.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
+                <AppVariantButton
+                  variant="danger"
+                  size="sm"
+                  className="flex flex-row items-center gap-2"
+                  onClick={() => openDeleteConfirm(selectedIds)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete {selectedIds.length}
+                </AppVariantButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {statuses.length > 0 && (
             <AppVariantButton
@@ -171,6 +178,7 @@ export default function CustomizableStatus() {
                 className="flex flex-row items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
+                Add status
               </AppVariantButton>
             }
           />
@@ -180,10 +188,22 @@ export default function CustomizableStatus() {
       {isLoading && <StatusGridSkeleton />}
 
       {!isLoading && statuses.length <= 0 && (
-        <NoDataFound text="No Status Found" />
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center border border-dashed border-border rounded-2xl">
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+            <Tag className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              No statuses yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Add one to start organizing your pipeline
+            </p>
+          </div>
+        </div>
       )}
 
-      {statuses && statuses.length > 0 && (
+      {!isLoading && statuses && statuses.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <AnimatePresence initial={false}>
             {statuses.map((status: any) => {
@@ -191,49 +211,47 @@ export default function CustomizableStatus() {
               return (
                 <motion.div
                   key={status._id}
-                  initial={{ opacity: 0, y: 6 }}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
-                   onClick={() => handleChipClick(status)}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={() => handleChipClick(status)}
                   className={cn(
-                    "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors overflow-hidden",
+                    "group relative flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors",
                     isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:bg-accent/50",
+                      ? "border-primary bg-primary/[0.04]"
+                      : "border-border bg-card hover:border-foreground/15",
                     isRowDeleting(status._id) &&
                       "opacity-50 pointer-events-none",
                   )}
                 >
                   <span
-                    className="absolute left-0 top-0 h-full w-1.5"
+                    className="w-9 h-9 rounded-lg shrink-0 ring-1 ring-inset ring-black/5"
                     style={{ backgroundColor: status.color }}
                   />
-                  <span
-                    className="w-8 h-8 rounded-lg shrink-0 ml-1"
-                    style={{ backgroundColor: status.color }}
-                  />
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-foreground truncate">
                         {status.name}
                       </span>
                       {status.default && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        <span className="text-[10px] leading-none px-1.5 py-1 rounded-full bg-muted text-muted-foreground shrink-0">
                           Default
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground uppercase">
+                    <span className="text-xs text-muted-foreground">
                       {status.color}
                     </span>
                   </div>
 
                   {!selectMode && (
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <AppIconButton
                         size="icon"
-                        tooltip="Set as Default"
+                        tooltip="Set as default"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSetDefault(status._id);
@@ -249,7 +267,6 @@ export default function CustomizableStatus() {
                           />
                         }
                       />
-
                       <AppIconButton
                         size="icon"
                         tooltip="Edit"
@@ -257,12 +274,9 @@ export default function CustomizableStatus() {
                           e.stopPropagation();
                           openEdit(status);
                         }}
-                        disabled={
-                          isSettingDefault(status._id)
-                        }
+                        disabled={isSettingDefault(status._id)}
                         icon={<Pencil />}
                       />
-
                       <AppIconButton
                         size="icon"
                         tooltip="Delete"
@@ -273,24 +287,36 @@ export default function CustomizableStatus() {
                         disabled={
                           status.default || isSettingDefault(status._id)
                         }
-                        icon={<Trash2 className=" text-destructive" />}
+                        icon={<Trash2 className="text-destructive" />}
                       />
                     </div>
                   )}
 
                   {selectMode && (
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
-                        isSelected
-                          ? "bg-primary border-primary"
-                          : "border-border",
-                      )}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        backgroundColor: isSelected
+                          ? "var(--primary)"
+                          : "transparent",
+                        borderColor: isSelected
+                          ? "var(--primary)"
+                          : "var(--border)",
+                      }}
+                      className="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
                     >
-                      {isSelected && (
-                        <X className="w-3 h-3 text-primary-foreground" />
-                      )}
-                    </div>
+                      <AnimatePresence>
+                        {isSelected && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                          >
+                            <Check className="w-3 h-3 text-primary-foreground" />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
                   )}
                 </motion.div>
               );
@@ -298,6 +324,7 @@ export default function CustomizableStatus() {
           </AnimatePresence>
         </div>
       )}
+
       <Dialog
         open={confirmDeleteOpen}
         onOpenChange={(v) => !v && setConfirmDeleteOpen(false)}

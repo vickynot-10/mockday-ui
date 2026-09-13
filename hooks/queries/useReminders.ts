@@ -1,42 +1,15 @@
 import { api } from "@/utils/axios";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
-const QUERY_KEY = "trackers";
+const QUERY_KEY = "reminders";
 
-type ReminderParams = {
-  search?: string;
-};
-
-
-export const useGetReminders = (params: ReminderParams) => {
+export const useGetReminders = (search?: string) => {
   return useQuery({
-    queryKey: [QUERY_KEY, params],
+    queryKey: [QUERY_KEY, search],
     queryFn: async () => {
-      const res = await api.get("/reminders", { params });
+      const res = await api.get("/reminders", { params : {search} });
       return res.data ?? null;
     },
     staleTime: 1000 * 60 * 5,
   });
 };
-
-
-export const useDeleteReminders = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: any) => {
-      const res = await api.delete("/trackers", {
-        data : data
-      });
-      return res.data ?? null;
-    },
-    onSuccess: (res: any) => {
-      if (res.success) {
-        toast.success(res.msg || "Deleted Successfully !");
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      }
-    },
-  });
-};
-
-

@@ -12,9 +12,9 @@ export default function StatusGridSkeleton({ count = 6 }: StatusGridSkeletonProp
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="relative flex items-center gap-3 rounded-xl border border-border bg-card p-3 overflow-hidden"
+          className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
         >
-          <Skeleton className="w-8 h-8 rounded-lg shrink-0 ml-1" />
+          <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
 
           <div className="flex-1 min-w-0 flex flex-col gap-1.5">
             <Skeleton className="h-3.5 w-24" />
