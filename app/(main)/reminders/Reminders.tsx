@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import useDebounce from "@/hooks/app/useDebounce";
 import { useGetReminders } from "@/hooks/queries/useReminders";
+import { useRemoveRemindersTrackers } from "@/hooks/queries/useTrackers";
 import AppIconButton from "@/components/common/AppIconButton";
 import AddReminder from "../job-tracker/components/AddReminder";
 import {
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 type ReminderRow = {
   _id: string;
   date: string;
+  tracker_id : string;
   note: string;
   reminder_at: string;
   time: string;
@@ -56,8 +58,8 @@ export default function Reminders() {
 
   const reminders: ReminderRow[] = data?.data?.docs ?? [];
   const groupRefs = useRef(new Map<string, HTMLDivElement>());
+  const { mutate, isPending } = useRemoveRemindersTrackers();
 
-  function removeReminder() {}
 
   const remindersByDay = useMemo(() => {
     const map = new Map<string, ReminderRow[]>();
@@ -102,11 +104,7 @@ export default function Reminders() {
 
   function confirmDeleteReminder() {
     if (!deleteTrackerId) return;
-    // removeReminder(deleteTrackerId, {
-    //   onSuccess: () => {
-    //     setDeleteTrackerId(null);
-    //   },
-    // });
+    mutate(deleteTrackerId)
   }
 
   function ReminderDayButton({
@@ -191,92 +189,95 @@ export default function Reminders() {
                 {format(parseISO(dateKey), "MMMM d, yyyy")}
               </span>
 
-              {dayReminders && dayReminders.length > 0 && dayReminders.map((reminder) => (
-                <motion.div
-                  key={reminder._id}
-                  animate={
-                    flashKey === dateKey
-                      ? {
-                          backgroundColor: [
-                            "rgba(255,255,255,0.08)",
-                            "rgba(255,255,255,0)",
-                          ],
-                        }
-                      : {}
-                  }
-                  transition={{ duration: 0.9 }}
-                  className="flex flex-col gap-2 rounded-xl border border-border p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                      {reminder.image ? (
-                        <img
-                          src={reminder.image}
-                          alt={getCompanyName(reminder)}
-                          className="object-contain w-6 h-6"
-                        />
-                      ) : (
-                        <span className="text-xs font-medium text-black">
-                          {getCompanyName(reminder)[0]}
-                        </span>
-                      )}
-                    </span>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {getCompanyName(reminder)}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {reminder.title}
-                      </p>
-                    </div>
-
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                      {reminder.status ?? "NA"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: `${reminder.status_color ?? DEFAULT_STATUS_COLOR}1a`,
-                          color: reminder.status_color ?? DEFAULT_STATUS_COLOR,
-                        }}
-                      >
-                        <Clock className="w-2.5 h-2.5" />
-                        {format(
-                          parseISO(reminder.reminder_at),
-                          "MMM d, h:mm a",
+              {dayReminders &&
+                dayReminders.length > 0 &&
+                dayReminders.map((reminder) => (
+                  <motion.div
+                    key={reminder._id}
+                    animate={
+                      flashKey === dateKey
+                        ? {
+                            backgroundColor: [
+                              "rgba(255,255,255,0.08)",
+                              "rgba(255,255,255,0)",
+                            ],
+                          }
+                        : {}
+                    }
+                    transition={{ duration: 0.9 }}
+                    className="flex flex-col gap-2 rounded-xl border border-border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                        {reminder.image ? (
+                          <img
+                            src={reminder.image}
+                            alt={getCompanyName(reminder)}
+                            className="object-contain w-6 h-6"
+                          />
+                        ) : (
+                          <span className="text-xs font-medium text-black">
+                            {getCompanyName(reminder)[0]}
+                          </span>
                         )}
                       </span>
-                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                        Applied{" "}
-                        {format(parseISO(reminder.applied_on), "MMM d, yyyy")}
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {getCompanyName(reminder)}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {reminder.title}
+                        </p>
+                      </div>
+
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                        {reminder.status ?? "NA"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <AppIconButton
-                        icon={<Pencil className="h-3 w-3" />}
-                        tooltip="Edit reminder"
-                        size="sm"
-                        className="h-6 w-6"
-                        onClick={() => openEditReminder(reminder._id)}
-                      />
-                      <AppIconButton
-                        icon={<Trash2 className="h-3 w-3 text-destructive" />}
-                        tooltip="Delete reminder"
-                        size="sm"
-                        className="h-6 w-6"
-                        onClick={() => setDeleteTrackerId(reminder._id)}
-                      />
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: `${reminder.status_color ?? DEFAULT_STATUS_COLOR}1a`,
+                            color:
+                              reminder.status_color ?? DEFAULT_STATUS_COLOR,
+                          }}
+                        >
+                          <Clock className="w-2.5 h-2.5" />
+                          {format(
+                            parseISO(reminder.reminder_at),
+                            "MMM d, h:mm a",
+                          )}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
+                          <CheckCircle2 className="w-2.5 h-2.5" />
+                          Applied{" "}
+                          {format(parseISO(reminder.applied_on), "MMM d, yyyy")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <AppIconButton
+                          icon={<Pencil className="h-3 w-3" />}
+                          tooltip="Edit reminder"
+                          size="sm"
+                          className="h-6 w-6"
+                          onClick={() => openEditReminder(reminder._id)}
+                        />
+                        <AppIconButton
+                          icon={<Trash2 className="h-3 w-3 text-destructive" />}
+                          tooltip="Delete reminder"
+                          size="sm"
+                          className="h-6 w-6"
+                          onClick={() => setDeleteTrackerId(reminder.tracker_id)}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
             </div>
           ))}
         </div>
@@ -305,6 +306,7 @@ export default function Reminders() {
             <AppVariantButton
               variant="default"
               size="sm"
+              disabled={isPending}
               onClick={() => setDeleteTrackerId(null)}
             >
               Cancel
@@ -312,6 +314,8 @@ export default function Reminders() {
             <AppVariantButton
               variant="danger"
               size="sm"
+              disabled={isPending}
+              isLoading={isPending}
               onClick={confirmDeleteReminder}
             >
               Delete

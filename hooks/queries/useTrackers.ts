@@ -14,7 +14,7 @@ type TrackerParams = {
   status?: any;
   from?: string;
   to?: string;
-  type : string;
+  type: string;
 };
 
 type StatusParams = {
@@ -79,14 +79,12 @@ export const useUpdateStatusTrackers = () => {
   });
 };
 
-
-
 export const useDeleteTrackers = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
       const res = await api.delete("/trackers", {
-        data : data
+        data: data,
       });
       return res.data ?? null;
     },
@@ -103,7 +101,9 @@ export const useRemindersTrackers = (tracker_id?: string, open?: boolean) => {
   return useQuery({
     queryKey: ["reminders-tracker", tracker_id],
     queryFn: async () => {
-      const res = await api.get("/trackers/reminders", { params: { id: tracker_id } });
+      const res = await api.get("/trackers/reminders", {
+        params: { id: tracker_id },
+      });
       return res.data ?? null;
     },
     enabled: open && !!tracker_id,
@@ -126,6 +126,7 @@ export const useSaveRemindersTrackers = () => {
 };
 
 export const useRemoveRemindersTrackers = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (tracker_id: string) => {
       const res = await api.delete("/trackers/reminders", {
@@ -135,6 +136,8 @@ export const useRemoveRemindersTrackers = () => {
     },
     onSuccess: (res: any) => {
       if (res.success) {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+        queryClient.invalidateQueries({ queryKey: ["reminders"] });
         toast.success(res.msg || "Reminder Removed Successfully !");
       }
     },
