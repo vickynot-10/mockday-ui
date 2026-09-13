@@ -54,13 +54,18 @@ type ChatStore = {
   setStatus: (status: string | null) => void;
   setStreaming: (val: boolean) => void;
   setAbortController: (c: AbortController | null) => void;
+  reset: () => void;
 };
 
-export const useChatStore = create<ChatStore>((set) => ({
-  messages: [],
-  currentStatus: null,
+const initialState = {
+  messages: [] as Message[],
+  currentStatus: null as string | null,
   isStreaming: false,
-  abortController: null,
+  abortController: null as AbortController | null,
+};
+
+export const useChatStore = create<ChatStore>((set, get) => ({
+  ...initialState,
   addMessage(msg) {
     set((s) => ({ messages: [...s.messages, msg] }));
   },
@@ -75,5 +80,9 @@ export const useChatStore = create<ChatStore>((set) => ({
   },
   setAbortController(c) {
     set({ abortController: c });
+  },
+  reset() {
+    get().abortController?.abort();
+    set({ ...initialState });
   },
 }));

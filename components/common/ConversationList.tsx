@@ -9,6 +9,7 @@ import { MessageSquareOff, MessageSquarePlus, Loader2 } from "lucide-react";
 import { useGetConversations } from "@/hooks/queries/useAI";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useChatStore } from "@/stores/chat.store";
 
 export default function ConversationList() {
   const pathname = usePathname();
@@ -24,24 +25,32 @@ export default function ConversationList() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const router = useRouter()
-  function NewChat(){
-    router.push("/ai-assistant")
-  }
+  const router = useRouter();
+  const reset = useChatStore((s) => s.reset);
 
+  function NewChat() {
+    reset();
+    router.push("/ai-assistant");
+  }
   return (
     <div className="flex h-full w-[280px] flex-col bg-[#1c1d27]">
       <div className="flex items-center justify-end px-3 py-3">
-        <AppIconButton onClick={NewChat} side="bottom" icon={
-          <MessageSquarePlus size={16} />} tooltip="New Chat"  />
-        
+        <AppIconButton
+          onClick={NewChat}
+          side="bottom"
+          icon={<MessageSquarePlus size={16} />}
+          tooltip="New Chat"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {isLoading && (
           <div className="flex flex-col gap-2 py-1">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-1.5 rounded-md px-3 py-2">
+              <div
+                key={i}
+                className="flex flex-col gap-1.5 rounded-md px-3 py-2"
+              >
                 <Skeleton className="h-3.5 w-[70%]" />
                 <Skeleton className="h-3 w-[35%]" />
               </div>
@@ -56,7 +65,9 @@ export default function ConversationList() {
               strokeWidth={1.5}
               className="text-muted-foreground"
             />
-            <p className="text-sm text-muted-foreground">No conversations yet</p>
+            <p className="text-sm text-muted-foreground">
+              No conversations yet
+            </p>
           </div>
         )}
 
@@ -70,7 +81,10 @@ export default function ConversationList() {
                 key={conversation._id}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.15, delay: Math.min(index, 8) * 0.02 }}
+                transition={{
+                  duration: 0.15,
+                  delay: Math.min(index, 8) * 0.02,
+                }}
               >
                 <Link
                   href={href}

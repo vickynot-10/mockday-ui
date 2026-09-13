@@ -25,6 +25,25 @@ const NavData: any[] = [
     icon: BriefcaseBusinessIcon,
     href: "/job-tracker",
   },
+
+  // {
+  //   type: "link",
+  //   label: "Jobs",
+  //   icon: BriefcaseBusinessIcon,
+  //   href: "/jobs",
+  // },
+
+  {
+    type: "dropdown",
+    label: "Apps",
+    icon: LayoutPanelLeft,
+    items: [
+      { label: "Resumes", icon: FileUser, href: "/resumes" },
+      { label: "AI Assistant", icon: MessageSquare, href: "/ai-assistant" },
+      { label: "Autofill Rules", icon: WandSparklesIcon, href: "/autofill" },
+      { label: "Reminders", icon: Clock10Icon, href: "/reminders" },
+    ],
+  },
   {
     type: "dropdown",
     label: "Settings",
@@ -41,17 +60,6 @@ const NavData: any[] = [
         icon: RotateCcwIcon,
         href: "/settings/notification-history",
       },
-    ],
-  },
-  {
-    type: "dropdown",
-    label: "Apps",
-    icon: LayoutPanelLeft,
-    items: [
-      { label: "Resumes", icon: FileUser, href: "/resumes" },
-      { label: "AI Assistant", icon: MessageSquare, href: "/ai-assistant" },
-      { label: "Autofill Rules", icon: WandSparklesIcon, href: "/autofill" },
-      { label: "Reminders", icon: Clock10Icon, href: "/reminders" },
     ],
   },
 ];

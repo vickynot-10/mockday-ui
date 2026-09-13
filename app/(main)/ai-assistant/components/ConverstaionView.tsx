@@ -14,15 +14,17 @@ import {
 
 export function ConversationView({
   conversation_id,
+  isLoading,
 }: {
   conversation_id?: string;
+  isLoading: boolean;
 }) {
   const messages = useChatStore((s) => s.messages);
   const currentStatus = useChatStore((s) => s.currentStatus);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const setMessages = useChatStore((s) => s.setMessages);
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+  const { data, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useGetConversationsMessages(conversation_id);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef(0);
@@ -109,7 +111,9 @@ export function ConversationView({
             <span className="text-xs text-muted-foreground">Loading...</span>
           )}
           {currentStatus && (
-            <span className="text-xs text-muted-foreground">{currentStatus}</span>
+            <span className="text-xs text-muted-foreground">
+              {currentStatus}
+            </span>
           )}
         </div>
       )}

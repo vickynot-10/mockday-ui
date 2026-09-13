@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { BellRing, CheckCircle2, XCircle, LucideIcon } from "lucide-react";
 import { useGetUserNotifications } from "@/hooks/queries/useNotiications";
 import NotificationsSkeleton from "@/loaders/notification_header.loader";
+import { useRouter } from "next/navigation";
 
 type Props = {
   trigger: ReactNode;
@@ -50,6 +51,10 @@ const NotificationDropdown = ({
 }: Props) => {
   const { data, isLoading } = useGetUserNotifications();
   const notifications = data?.data ?? [];
+  const router = useRouter();
+  function SeeALlNotif() {
+    router.push("/settings/notification-history");
+  }
 
   return (
     <div className="flex items-center justify-center">
@@ -120,7 +125,10 @@ const NotificationDropdown = ({
               </div>
             )}
             <div className="mx-1.5 my-1 p-2">
-              <Button className="rounded-xl w-full cursor-pointer hover:bg-primary/80">
+              <Button
+                className="rounded-xl w-full cursor-pointer hover:bg-primary/80"
+                onClick={SeeALlNotif}
+              >
                 See All Notifications
               </Button>
             </div>
