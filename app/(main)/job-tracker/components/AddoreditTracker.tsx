@@ -73,8 +73,8 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
     const notesArray: string[] = Array.isArray(rawNotes)
       ? rawNotes
       : rawNotes
-      ? [rawNotes]
-      : [];
+        ? [rawNotes]
+        : [];
 
     const loaded: TrackerForm = {
       ...EMPTY_FORM,
@@ -164,12 +164,8 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
     setActiveTab(newId);
   }
 
-
-
   return (
     <>
-     
-
       <form
         onSubmit={(e) => e.preventDefault()}
         className="flex flex-col mt-4 overflow-x-hidden h-[calc(100vh-140px)]"
@@ -349,7 +345,8 @@ export default function AddOrEditJobTracker({ id }: EditProps) {
 
                   {notes.length > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Ctrl + Enter to add a row · Ctrl + Shift + Backspace to delete the current row
+                      Ctrl + Enter to add a row · Ctrl + Shift + Backspace to
+                      delete the current row
                     </p>
                   )}
 

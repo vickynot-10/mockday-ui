@@ -33,6 +33,17 @@ export const useGetTrackers = (params: TrackerParams) => {
   });
 };
 
+export const useGetAllTrackers = () => {
+  return useQuery({
+    queryKey: ["all-trackters"],
+    queryFn: async () => {
+      const res = await api.get("/trackers/all");
+      return res.data ?? null;
+    },
+    staleTime: Infinity,
+  });
+};
+
 export const useGetTrackerByID = (id?: string) => {
   return useQuery({
     queryKey: [QUERY_KEY, id],
@@ -97,21 +108,22 @@ export const useDeleteTrackers = () => {
   });
 };
 
-export const useRemindersTrackers = (tracker_id?: string, open?: boolean) => {
+export const useRemindersTrackers = (reminder_id?: string, open?: boolean) => {
   return useQuery({
-    queryKey: ["reminders-tracker", tracker_id],
+    queryKey: ["reminders-tracker", reminder_id],
     queryFn: async () => {
       const res = await api.get("/trackers/reminders", {
-        params: { id: tracker_id },
+        params: { id: reminder_id },
       });
       return res.data ?? null;
     },
-    enabled: open && !!tracker_id,
+    enabled: open && !!reminder_id,
     staleTime: 0,
   });
 };
 
 export const useSaveRemindersTrackers = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
       const res = await api.post("/trackers/reminders", data);
@@ -119,6 +131,8 @@ export const useSaveRemindersTrackers = () => {
     },
     onSuccess: (res: any) => {
       if (res.success) {
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+        queryClient.invalidateQueries({ queryKey: ["reminders"] });
         toast.success(res.msg || "Reminder Updated Successfully !");
       }
     },

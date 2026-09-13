@@ -14,16 +14,7 @@ import CreateStatus from "@/components/common/CreateStatus";
 import ViewToggleButtonGroup from "./components/ViewToggle";
 import JobTrackerTableView from "./components/TrackerTableView";
 
-import {
-  ReminderFilterButton,
-  SortFilterButton,
-} from "./components/ButtonElements";
-
-const REMINDER_TOOLTIP = {
-  0: "All",
-  1: "Only with reminder",
-  2: "No reminder",
-} as const;
+import { SortFilterButton } from "./components/ButtonElements";
 
 const EMPTY_ARRAY: never[] = [];
 
@@ -60,8 +51,6 @@ export default function JobTracker() {
     to,
     sort,
     toggleSort,
-    reminder,
-    toggleReminder,
   } = useTrackerFilters();
 
   const { data: statusData } = useGetAllStatus();
@@ -84,26 +73,27 @@ export default function JobTracker() {
     status,
     from,
     to,
-    reminder,
   };
 
   return (
     <>
       <div className="flex flex-row items-center justify-between my-4">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by job title or company"
-            className="pl-9"
+            className="pl-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
           />
         </div>
+
         <AppIconButton
           icon={<Plus className="h-4 w-4" />}
           variant="default"
-          tooltip="Add"
+          tooltip="Create"
           size="icon"
+          side="bottom"
           href={`/job-tracker/add`}
         />
       </div>
@@ -120,14 +110,7 @@ export default function JobTracker() {
             className="h-9 w-9"
             onClick={toggleSort}
           />
-          <AppIconButton
-            icon={<ReminderFilterButton value={reminder} />}
-            variant="outline"
-            tooltip={REMINDER_TOOLTIP[reminder]}
-            size="icon"
-            className="h-9 w-9"
-            onClick={toggleReminder}
-          />
+
           <AppliedDateFilter value={dateRange} onApply={setDateRange} />
 
           <FilterBar

@@ -62,8 +62,10 @@ type Props = {
   statuses: TrackerStatus[];
 };
 
-interface TrackerCardProps
-  extends Omit<ComponentProps<typeof KanbanItem>, "value" | "children"> {
+interface TrackerCardProps extends Omit<
+  ComponentProps<typeof KanbanItem>,
+  "value" | "children"
+> {
   item: TrackerCard;
   asHandle?: boolean;
   isOverlay?: boolean;
@@ -157,8 +159,10 @@ function TrackerItemCard({
   );
 }
 
-interface TrackerColumnProps
-  extends Omit<ComponentProps<typeof KanbanColumn>, "children"> {
+interface TrackerColumnProps extends Omit<
+  ComponentProps<typeof KanbanColumn>,
+  "children"
+> {
   label: string;
   items: TrackerCard[];
   isOverlay?: boolean;
@@ -227,7 +231,9 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
   const docs: Record<string, TrackerCard[]> = data?.data?.docs ?? EMPTY_OBJECT;
   const [columns, setColumns] = useState<Record<string, TrackerCard[]>>({});
 
-  const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(null);
+  const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(
+    null,
+  );
   const [openReminders, setOpenReminders] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -246,7 +252,7 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
 
   function handleValueCommit(
     _value: Record<string, TrackerCard[]>,
-    meta: KanbanCommitMeta<TrackerCard>
+    meta: KanbanCommitMeta<TrackerCard>,
   ) {
     if (meta.kind !== "item") return;
 
@@ -275,7 +281,7 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
   }
 
   if (isLoading) {
-    return <JobTrackerKanbanSkeleton />
+    return <JobTrackerKanbanSkeleton />;
   }
 
   const columnKeys = Object.keys(columns);
@@ -307,7 +313,14 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
             if (variant === "column") {
               const key = String(value);
               const items = columns[key] ?? [];
-              return <TrackerStatusColumn value={key} label={key} items={items} isOverlay />;
+              return (
+                <TrackerStatusColumn
+                  value={key}
+                  label={key}
+                  items={items}
+                  isOverlay
+                />
+              );
             }
 
             const item = Object.values(columns)
@@ -323,19 +336,23 @@ export default function JobTrackerKanbanView({ filters, statuses }: Props) {
 
       {reminderTrackerId && (
         <AddReminder
-          trackerId={reminderTrackerId}
+          tracker_id={reminderTrackerId}
           open={openReminders}
           onOpenChange={setOpenReminders}
         />
       )}
 
-      <Dialog open={!!deleteTargetId} onOpenChange={(v) => !v && setDeleteTargetId(null)}>
+      <Dialog
+        open={!!deleteTargetId}
+        onOpenChange={(v) => !v && setDeleteTargetId(null)}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete tracker?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This can't be undone. The selected tracker will be permanently removed.
+            This can't be undone. The selected tracker will be permanently
+            removed.
           </p>
           <DialogFooter className="flex flex-row justify-end gap-2 mt-2">
             <AppVariantButton

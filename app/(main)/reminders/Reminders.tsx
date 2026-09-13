@@ -4,7 +4,11 @@ import { format, parseISO, isSameMonth } from "date-fns";
 import { motion } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import useDebounce from "@/hooks/app/useDebounce";
 import { useGetReminders } from "@/hooks/queries/useReminders";
 import { useRemoveRemindersTrackers } from "@/hooks/queries/useTrackers";
@@ -26,6 +30,7 @@ import {
   Trash2,
   CalendarDays,
   CalendarSearch,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +41,7 @@ type ReminderRow = {
   note: string;
   reminder_at: string;
   time: string;
+  company: string;
   image?: string | null;
   applied_on: string;
   title: string;
@@ -44,16 +50,6 @@ type ReminderRow = {
 };
 
 const DEFAULT_STATUS_COLOR = "#94a3b8";
-
-function getCompanyName(reminder: ReminderRow) {
-  if (!reminder.image) return "NA";
-  try {
-    const host = new URL(reminder.image).hostname.replace("www.", "");
-    return host.split(".")[0].toUpperCase();
-  } catch {
-    return "NA";
-  }
-}
 
 export default function Reminders() {
   const [search, setSearch] = useState("");
@@ -118,8 +114,10 @@ export default function Reminders() {
     setSearchDateOpen(false);
   }
 
-  function openEditReminder(trackerId: string) {
-    setEditTrackerId(trackerId);
+  function openEditReminder(reminder_id?: string) {
+    if (reminder_id) {
+      setEditTrackerId(reminder_id);
+    }
     setOpenEdit(true);
   }
 
@@ -169,13 +167,24 @@ export default function Reminders() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search Reminders by notes"
-          className="pl-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
+      <div className=" flex flex-row items-center justify-between">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search Reminders by notes"
+            className="pl-9 rounded-full bg-muted/40 border-transparent focus-visible:bg-background"
+          />
+        </div>
+
+        <AppIconButton
+          icon={<Plus className="h-4 w-4" />}
+          variant="default"
+          side="bottom"
+          tooltip="Create"
+          size="icon"
+          onClick={() => openEditReminder()}
         />
       </div>
 
@@ -268,19 +277,19 @@ export default function Reminders() {
                         {reminder.image ? (
                           <img
                             src={reminder.image}
-                            alt={getCompanyName(reminder)}
+                            alt={reminder.company}
                             className="object-contain w-6 h-6"
                           />
                         ) : (
                           <span className="text-xs font-medium text-black">
-                            {getCompanyName(reminder)[0]}
+                            {reminder.company ?? "NA"}
                           </span>
                         )}
                       </span>
 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
-                          {getCompanyName(reminder)}
+                          {reminder.company ?? "NA"}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {reminder.title}
@@ -328,7 +337,9 @@ export default function Reminders() {
                           tooltip="Delete reminder"
                           size="sm"
                           className="h-6 w-6"
-                          onClick={() => setDeleteTrackerId(reminder.tracker_id)}
+                          onClick={() =>
+                            setDeleteTrackerId(reminder.tracker_id)
+                          }
                         />
                       </div>
                     </div>
@@ -339,11 +350,14 @@ export default function Reminders() {
         </div>
       </div>
 
-      {editTrackerId && (
+      {openEdit && (
         <AddReminder
-          trackerId={editTrackerId}
+          reminder_id={editTrackerId ?? undefined}
           open={openEdit}
-          onOpenChange={setOpenEdit}
+          onOpenChange={(next) => {
+            setOpenEdit(next);
+            if (!next) setEditTrackerId(null);
+          }}
         />
       )}
 

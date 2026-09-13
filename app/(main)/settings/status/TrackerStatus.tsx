@@ -16,15 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  Check,
-  Star,
-  Tag,
-} from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Check, Star, Tag } from "lucide-react";
 import { toast } from "sonner";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import useDebounce from "@/hooks/app/useDebounce";
@@ -171,15 +163,14 @@ export default function CustomizableStatus() {
               editingId ? statuses.find((s: any) => s._id === editingId) : null
             }
             trigger={
-              <AppVariantButton
-                onClick={openCreate}
+              <AppIconButton
+                icon={<Plus className="h-4 w-4" />}
                 variant="default"
-                size="sm"
-                className="flex flex-row items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add status
-              </AppVariantButton>
+                side="bottom"
+                onClick={openCreate}
+                tooltip="Create"
+                size="icon"
+              />
             }
           />
         </div>

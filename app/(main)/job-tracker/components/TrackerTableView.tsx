@@ -3,7 +3,14 @@
 import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, BellPlus, EllipsisVertical, X, Plus } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  BellPlus,
+  EllipsisVertical,
+  X,
+  Plus,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,7 +25,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AppTable, AppTableColumn, AppTablePageInfo } from "@/components/common/AppTable";
+import {
+  AppTable,
+  AppTableColumn,
+  AppTablePageInfo,
+} from "@/components/common/AppTable";
 import AppIconButton from "@/components/common/AppIconButton";
 import AppVariantButton from "@/components/common/AppVariantButton";
 import AddReminder from "./AddReminder";
@@ -47,17 +58,26 @@ type Props = {
   onAddStatus: () => void;
 };
 
-export default function JobTrackerTableView({ filters, statuses, onAddStatus }: Props) {
-  const [pageInfo, setPageInfo] = useState<AppTablePageInfo>({ page: 1, pageSize: 25 });
+export default function JobTrackerTableView({
+  filters,
+  statuses,
+  onAddStatus,
+}: Props) {
+  const [pageInfo, setPageInfo] = useState<AppTablePageInfo>({
+    page: 1,
+    pageSize: 25,
+  });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
-  const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(null);
+  const [reminderTrackerId, setReminderTrackerId] = useState<string | null>(
+    null,
+  );
   const [openReminders, setOpenReminders] = useState(false);
 
   const { data, isLoading } = useGetTrackers({
     page: pageInfo.page,
     limit: pageInfo.pageSize,
-    type : "table",
+    type: "table",
     ...filters,
   });
 
@@ -73,21 +93,28 @@ export default function JobTrackerTableView({ filters, statuses, onAddStatus }: 
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   }
 
   function toggleSelectAll() {
     const pageIds = rows.map((r) => r._id);
-    const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+    const allSelected =
+      pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
     setSelectedIds((prev) =>
-      allSelected ? prev.filter((id) => !pageIds.includes(id)) : [...new Set([...prev, ...pageIds])],
+      allSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])],
     );
   }
 
   function confirmDelete() {
     deleteTrackers(deleteTargetIds, {
       onSuccess: () => {
-        setSelectedIds((prev) => prev.filter((id) => !deleteTargetIds.includes(id)));
+        setSelectedIds((prev) =>
+          prev.filter((id) => !deleteTargetIds.includes(id)),
+        );
         setDeleteTargetIds([]);
       },
     });
@@ -99,7 +126,9 @@ export default function JobTrackerTableView({ filters, statuses, onAddStatus }: 
         key: "select",
         label: (
           <Checkbox
-            checked={rows.length > 0 && rows.every((r) => selectedIds.includes(r._id))}
+            checked={
+              rows.length > 0 && rows.every((r) => selectedIds.includes(r._id))
+            }
             onCheckedChange={toggleSelectAll}
           />
         ),
@@ -242,7 +271,10 @@ export default function JobTrackerTableView({ filters, statuses, onAddStatus }: 
                 </div>
                 <DropdownMenuSeparator className="mx-0" />
                 <div className="p-1">
-                  <DropdownMenuItem onClick={onAddStatus} className="flex items-center gap-2 text-primary">
+                  <DropdownMenuItem
+                    onClick={onAddStatus}
+                    className="flex items-center gap-2 text-primary"
+                  >
                     <Plus className="w-3.5 h-3.5" />
                     Add Status
                   </DropdownMenuItem>
@@ -283,17 +315,24 @@ export default function JobTrackerTableView({ filters, statuses, onAddStatus }: 
 
       {reminderTrackerId && (
         <AddReminder
-          trackerId={reminderTrackerId}
+          tracker_id={reminderTrackerId}
           open={openReminders}
           onOpenChange={setOpenReminders}
         />
       )}
 
-      <Dialog open={deleteTargetIds.length > 0} onOpenChange={(v) => !v && setDeleteTargetIds([])}>
+      <Dialog
+        open={deleteTargetIds.length > 0}
+        onOpenChange={(v) => !v && setDeleteTargetIds([])}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              Delete {deleteTargetIds.length > 1 ? `${deleteTargetIds.length} trackers` : "tracker"}?
+              Delete{" "}
+              {deleteTargetIds.length > 1
+                ? `${deleteTargetIds.length} trackers`
+                : "tracker"}
+              ?
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
