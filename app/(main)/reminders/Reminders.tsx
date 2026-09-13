@@ -4,6 +4,7 @@ import { format, parseISO, isSameMonth } from "date-fns";
 import { motion } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import useDebounce from "@/hooks/app/useDebounce";
 import { useGetReminders } from "@/hooks/queries/useReminders";
 import { useRemoveRemindersTrackers } from "@/hooks/queries/useTrackers";
@@ -17,13 +18,21 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import AppVariantButton from "@/components/common/AppVariantButton";
-import { Search, Clock, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import {
+  Search,
+  Clock,
+  CheckCircle2,
+  Pencil,
+  Trash2,
+  CalendarDays,
+  CalendarSearch,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ReminderRow = {
   _id: string;
   date: string;
-  tracker_id : string;
+  tracker_id: string;
   note: string;
   reminder_at: string;
   time: string;
@@ -53,13 +62,13 @@ export default function Reminders() {
   const [editTrackerId, setEditTrackerId] = useState<string | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
   const [deleteTrackerId, setDeleteTrackerId] = useState<string | null>(null);
+  const [searchDateOpen, setSearchDateOpen] = useState(false);
   const search_term = useDebounce(search, 500);
   const { data } = useGetReminders(search_term);
 
   const reminders: ReminderRow[] = data?.data?.docs ?? [];
   const groupRefs = useRef(new Map<string, HTMLDivElement>());
   const { mutate, isPending } = useRemoveRemindersTrackers();
-
 
   const remindersByDay = useMemo(() => {
     const map = new Map<string, ReminderRow[]>();
@@ -94,7 +103,19 @@ export default function Reminders() {
     if (!node) return;
     node.scrollIntoView({ behavior: "smooth", block: "start" });
     setFlashKey(key);
-    setTimeout(() => setFlashKey(null), 900);
+  }
+
+  function goToToday() {
+    const today = new Date();
+    setVisibleMonth(today);
+    scrollToDate(today);
+  }
+
+  function handleSearchDate(day: Date | undefined) {
+    if (!day) return;
+    setVisibleMonth(day);
+    scrollToDate(day);
+    setSearchDateOpen(false);
   }
 
   function openEditReminder(trackerId: string) {
@@ -104,7 +125,11 @@ export default function Reminders() {
 
   function confirmDeleteReminder() {
     if (!deleteTrackerId) return;
-    mutate(deleteTrackerId)
+    mutate(deleteTrackerId, {
+      onSuccess: () => {
+        setDeleteTrackerId(null);
+      },
+    });
   }
 
   function ReminderDayButton({
@@ -156,10 +181,38 @@ export default function Reminders() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:flex-[3] flex flex-col gap-3">
-          <span className="text-sm text-muted-foreground">
-            {monthCount} reminder{monthCount === 1 ? "" : "s"} in{" "}
-            {format(visibleMonth, "MMMM yyyy")}
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">
+              {monthCount} reminder{monthCount === 1 ? "" : "s"} in{" "}
+              {format(visibleMonth, "MMMM yyyy")}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <AppIconButton
+                icon={<CalendarDays className="h-3.5 w-3.5" />}
+                tooltip="Go to today"
+                size="sm"
+                className="h-7 w-7"
+                onClick={goToToday}
+              />
+              <Popover open={searchDateOpen} onOpenChange={setSearchDateOpen}>
+                <PopoverTrigger
+                  render={
+                    <AppIconButton
+                      icon={<CalendarSearch className="h-3.5 w-3.5" />}
+                      tooltip="Jump to date"
+                      size="sm"
+                      className="h-7 w-7"
+                    />
+                  }
+                />
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar mode="single" onSelect={handleSearchDate} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
           <Calendar
             mode="single"
             month={visibleMonth}
@@ -205,6 +258,9 @@ export default function Reminders() {
                         : {}
                     }
                     transition={{ duration: 0.9 }}
+                    onAnimationComplete={() => {
+                      if (flashKey === dateKey) setFlashKey(null);
+                    }}
                     className="flex flex-col gap-2 rounded-xl border border-border p-3"
                   >
                     <div className="flex items-center gap-3">
