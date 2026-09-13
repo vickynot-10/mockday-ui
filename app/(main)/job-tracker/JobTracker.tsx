@@ -4,7 +4,6 @@ import useDebounce from "@/hooks/app/useDebounce";
 import { FilterBar } from "@/components/godui/filter-bar";
 import AppliedDateFilter from "@/components/common/DatePicker";
 import { useTrackerFilters } from "@/hooks/filters/useTrackerFilters";
-import { ArrowUpDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useGetAllStatus } from "@/hooks/queries/useStatus";
 import { useMemo, useState } from "react";

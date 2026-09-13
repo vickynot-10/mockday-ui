@@ -9,6 +9,7 @@ import {
   Info,
   BriefcaseBusinessIcon,
   WandSparklesIcon,
+  Clock10Icon,
 } from "lucide-react";
 
 const NavData: any[] = [
@@ -50,6 +51,7 @@ const NavData: any[] = [
       { label: "Resumes", icon: FileUser, href: "/resumes" },
       { label: "AI Assistant", icon: MessageSquare, href: "/ai-assistant" },
       { label: "Autofill Rules", icon: WandSparklesIcon, href: "/autofill" },
+      { label: "Reminders", icon: Clock10Icon, href: "/reminders" },
     ],
   },
 ];
