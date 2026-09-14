@@ -5,8 +5,10 @@ import { MapPin, Search } from "lucide-react";
 import { AppButton } from "@/components/common/AppButton";
 import {
   ExperienceLevelFilter,
+  FacetClearButton,
   JobPostedFilter,
   JobTypeFilter,
+  ToggleSortButton,
   WorkModelFilter,
 } from "./components/JobFilter";
 
@@ -20,6 +22,7 @@ const SORT_BY = [
 export default function JobsSearch() {
   return (
     <div className=" w-full flex flex-col gap-3">
+      <ToggleSortButton />
       <div className=" w-full flex items-center flex-row  justify-between">
         <div className="flex items-center rounded-full border border-border bg-background shadow-sm px-2 py-1.5 gap-1">
           <div className="flex items-center flex-1 gap-2 px-3">
@@ -48,8 +51,11 @@ export default function JobsSearch() {
 
         <div className="    flex items-center  flex-row gap-3">
           <JobPostedFilter />
-          <WorkModelFilter />
+
           <ExperienceLevelFilter />
+          <WorkModelFilter />
+
+          <FacetClearButton />
         </div>
       </div>
 
