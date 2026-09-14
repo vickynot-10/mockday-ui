@@ -176,181 +176,26 @@ const FilterBar = React.forwardRef<HTMLDivElement, FilterBarProps>(
             o.label.toLowerCase().includes(query.toLowerCase()),
           );
           return (
-            <div key={facet.id} className="relative">
-              <div
-                className={`group flex items-center rounded-full border [transition:border-color_150ms_ease,background-color_150ms_ease] ${
-                  hasSelection
-                    ? "border-foreground/15 bg-accent"
-                    : "border-dashed border-border bg-background hover:border-foreground/25 hover:bg-accent/50"
-                }`}
-              >
-                <button
-                  type="button"
-                  aria-expanded={isOpen}
-                  aria-haspopup="listbox"
-                  onClick={() => {
-                    setQuery("");
-                    setOpen(isOpen ? null : facet.id);
-                  }}
-                  className="flex items-center gap-1.5 rounded-full py-1.5 pr-2 pl-3 font-medium text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <AnimatePresence initial={false}>
-                    {!hasSelection && (
-                      <motion.span
-                        key="plus"
-                        initial={
-                          reduceMotion
-                            ? { opacity: 0 }
-                            : { opacity: 0, scale: 0.25 }
-                        }
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={
-                          reduceMotion
-                            ? { opacity: 0 }
-                            : { opacity: 0, scale: 0.25 }
-                        }
-                        transition={spring}
-                        className="text-muted-foreground"
-                      >
-                        {PlusIcon}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                  <span
-                    className={
-                      hasSelection ? "text-foreground" : "text-muted-foreground"
-                    }
-                  >
-                    {facet.label}
-                  </span>
-                  <AnimatePresence initial={false}>
-                    {hasSelection && (
-                      <motion.span
-                        key="summary"
-                        initial={fadeSlide}
-                        animate={fadeSlideIn}
-                        exit={fadeSlide}
-                        transition={spring}
-                        className="flex items-center gap-1.5"
-                      >
-                        <span className="h-3.5 w-px bg-border" />
-                        <span className="whitespace-nowrap text-foreground">
-                          {summarize(facet, selected)}
-                        </span>
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-                <AnimatePresence initial={false}>
-                  {hasSelection && (
-                    <motion.button
-                      type="button"
-                      initial={
-                        reduceMotion
-                          ? { opacity: 0 }
-                          : { opacity: 0, scale: 0.6 }
-                      }
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={
-                        reduceMotion
-                          ? { opacity: 0 }
-                          : { opacity: 0, scale: 0.6 }
-                      }
-                      transition={spring}
-                      onClick={() => clearFacet(facet.id)}
-                      aria-label={`Clear ${facet.label}`}
-                      className="mr-1 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground [transition:background-color_150ms_ease,color_150ms_ease] hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {CloseIcon}
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.div
-                    role="listbox"
-                    initial={
-                      reduceMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, scale: 0.96, y: -4 }
-                    }
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={
-                      reduceMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, scale: 0.96, y: -4 }
-                    }
-                    transition={spring}
-                    className="absolute top-full left-0 z-50 mt-2 w-60 origin-top-left rounded-xl border border-border bg-background p-1.5 shadow-xl"
-                  >
-                    {searchable && (
-                      <input
-                        // biome-ignore lint/a11y/noAutofocus: focus the search when the facet popover opens
-                        autoFocus
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={`Search ${facet.label.toLowerCase()}…`}
-                        className="mb-1 w-full rounded-lg border border-border bg-muted px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                      />
-                    )}
-                    <ul className="max-h-60 overflow-y-auto">
-                      {filtered.length === 0 && (
-                        <li className="px-3 py-2 text-muted-foreground text-sm">
-                          No matches
-                        </li>
-                      )}
-                      {filtered.map((opt) => {
-                        const checked = selected.includes(opt.value);
-                        return (
-                          <li key={opt.value}>
-                            <button
-                              type="button"
-                              role="option"
-                              aria-selected={checked}
-                              onClick={() => toggleOption(facet.id, opt.value)}
-                              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm [transition:background-color_150ms_ease] hover:bg-accent"
-                            >
-                              <span
-                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border [transition:background-color_150ms_ease,border-color_150ms_ease] ${
-                                  checked
-                                    ? "border-foreground bg-foreground text-background"
-                                    : "border-border"
-                                }`}
-                              >
-                                {checked && (
-                                  <svg
-                                    aria-hidden="true"
-                                    viewBox="0 0 24 24"
-                                    className="h-3 w-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M20 6 9 17l-5-5" />
-                                  </svg>
-                                )}
-                              </span>
-                              <span className="flex-1 text-foreground">
-                                {opt.label}
-                              </span>
-                              {showCounts && opt.count !== undefined && (
-                                <span className="text-muted-foreground text-xs tabular-nums">
-                                  {opt.count}
-                                </span>
-                              )}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <FacetItem
+              key={facet.id}
+              facet={facet}
+              selected={selected}
+              hasSelection={hasSelection}
+              isOpen={isOpen}
+              filtered={filtered}
+              query={query}
+              setQuery={setQuery}
+              setOpen={setOpen}
+              toggleOption={toggleOption}
+              clearFacet={clearFacet}
+              searchable={searchable}
+              showCounts={showCounts}
+              spring={spring}
+              fadeSlide={fadeSlide}
+              fadeSlideIn={fadeSlideIn}
+              reduceMotion={reduceMotion ?? false}
+              summarize={summarize}
+            />
           );
         })}
 
@@ -376,5 +221,236 @@ const FilterBar = React.forwardRef<HTMLDivElement, FilterBarProps>(
   },
 );
 FilterBar.displayName = "FilterBar";
+
+// ---------- FacetItem ----------
+
+type FacetItemProps = {
+  facet: Facet;
+  selected: string[];
+  hasSelection: boolean;
+  isOpen: boolean;
+  filtered: FilterOption[];
+  query: string;
+  setQuery: (q: string) => void;
+  setOpen: (id: string | null) => void;
+  toggleOption: (facetId: string, optValue: string) => void;
+  clearFacet: (facetId: string) => void;
+  searchable: boolean;
+  showCounts: boolean;
+  spring: object;
+  fadeSlide: object;
+  fadeSlideIn: object;
+  reduceMotion: boolean;
+  summarize: (facet: Facet, selected: string[]) => string;
+};
+
+function FacetItem({
+  facet,
+  selected,
+  hasSelection,
+  isOpen,
+  filtered,
+  query,
+  setQuery,
+  setOpen,
+  toggleOption,
+  clearFacet,
+  searchable,
+  showCounts,
+  spring,
+  fadeSlide,
+  fadeSlideIn,
+  reduceMotion,
+  summarize,
+}: FacetItemProps) {
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const [popoverStyle, setPopoverStyle] = React.useState<React.CSSProperties>(
+    {},
+  );
+
+  const POPOVER_WIDTH = 240; // w-60 = 15rem = 240px
+
+  const handleOpen = () => {
+    setQuery("");
+    if (!isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const wouldOverflowRight =
+        rect.left + POPOVER_WIDTH > window.innerWidth - 8;
+      setPopoverStyle({
+        position: "fixed",
+        top: rect.bottom + 8,
+        zIndex: 9999,
+        // If it would overflow the right edge, align to the right of the trigger instead
+        ...(wouldOverflowRight
+          ? { right: window.innerWidth - rect.right }
+          : { left: rect.left }),
+      });
+    }
+    setOpen(isOpen ? null : facet.id);
+  };
+
+  return (
+    <div className="relative">
+      <div
+        className={`group flex items-center rounded-full border [transition:border-color_150ms_ease,background-color_150ms_ease] ${
+          hasSelection
+            ? "border-foreground/15 bg-accent"
+            : "border-dashed border-border bg-background hover:border-foreground/25 hover:bg-accent/50"
+        }`}
+      >
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          onClick={handleOpen}
+          className="flex items-center gap-1.5 rounded-full py-1.5 pr-2 pl-3 font-medium text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <AnimatePresence initial={false}>
+            {!hasSelection && (
+              <motion.span
+                key="plus"
+                initial={
+                  reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.25 }
+                }
+                animate={{ opacity: 1, scale: 1 }}
+                exit={
+                  reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.25 }
+                }
+                transition={spring}
+                className="text-muted-foreground"
+              >
+                {PlusIcon}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <span
+            className={
+              hasSelection ? "text-foreground" : "text-muted-foreground"
+            }
+          >
+            {facet.label}
+          </span>
+          <AnimatePresence initial={false}>
+            {hasSelection && (
+              <motion.span
+                key="summary"
+                initial={fadeSlide}
+                animate={fadeSlideIn}
+                exit={fadeSlide}
+                transition={spring}
+                className="flex items-center gap-1.5"
+              >
+                <span className="h-3.5 w-px bg-border" />
+                <span className="whitespace-nowrap text-foreground">
+                  {summarize(facet, selected)}
+                </span>
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+        <AnimatePresence initial={false}>
+          {hasSelection && (
+            <motion.button
+              type="button"
+              initial={
+                reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }
+              }
+              animate={{ opacity: 1, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+              transition={spring}
+              onClick={() => clearFacet(facet.id)}
+              aria-label={`Clear ${facet.label}`}
+              className="mr-1 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground [transition:background-color_150ms_ease,color_150ms_ease] hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {CloseIcon}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            role="listbox"
+            style={popoverStyle}
+            initial={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }
+            }
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }
+            }
+            transition={spring}
+            className="w-60 origin-top-left rounded-xl border border-border bg-background p-1.5 shadow-xl"
+          >
+            {searchable && (
+              <input
+                // biome-ignore lint/a11y/noAutofocus: focus the search when the facet popover opens
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Search ${facet.label.toLowerCase()}…`}
+                className="mb-1 w-full rounded-lg border border-border bg-muted px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            )}
+            <ul className="max-h-60 overflow-y-auto">
+              {filtered.length === 0 && (
+                <li className="px-3 py-2 text-muted-foreground text-sm">
+                  No matches
+                </li>
+              )}
+              {filtered.map((opt) => {
+                const checked = selected.includes(opt.value);
+                return (
+                  <li key={opt.value}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={checked}
+                      onClick={() => toggleOption(facet.id, opt.value)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm [transition:background-color_150ms_ease] hover:bg-accent"
+                    >
+                      <span
+                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border [transition:background-color_150ms_ease,border-color_150ms_ease] ${
+                          checked
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border"
+                        }`}
+                      >
+                        {checked && (
+                          <svg
+                            aria-hidden="true"
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="flex-1 text-foreground">
+                        {opt.label}
+                      </span>
+                      {showCounts && opt.count !== undefined && (
+                        <span className="text-muted-foreground text-xs tabular-nums">
+                          {opt.count}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export { FilterBar };
