@@ -10,6 +10,7 @@ import {
   BriefcaseBusinessIcon,
   WandSparklesIcon,
   Clock10Icon,
+  SearchIcon,
 } from "lucide-react";
 
 const NavData: any[] = [
@@ -26,12 +27,12 @@ const NavData: any[] = [
     href: "/job-tracker",
   },
 
-  // {
-  //   type: "link",
-  //   label: "Jobs",
-  //   icon: BriefcaseBusinessIcon,
-  //   href: "/jobs",
-  // },
+  {
+    type: "link",
+    label: "Job Search",
+    icon: SearchIcon,
+    href: "/job-search",
+  },
 
   {
     type: "dropdown",

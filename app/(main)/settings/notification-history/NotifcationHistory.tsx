@@ -4,7 +4,7 @@ import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Mail, Smartphone, Layers,} from "lucide-react";
+import { Mail, Smartphone, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -121,21 +121,28 @@ export default function NotificationsHistory() {
           })}
         </ButtonGroup>
 
-        <AppliedDateFilter value={dateRange} onApply={setDateRange} />
+        <AppliedDateFilter
+          placeholder="Choose Date"
+          value={dateRange}
+          onApply={setDateRange}
+        />
       </div>
 
       {isLoading && <NotificationLogsSkeleton count={6} />}
 
       {!isLoading && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center w-full gap-2">
-              <Image
-                src="/icons/no_notifications.svg"
-                alt="No Data Found"
-                height={400}
-                width={400}
-              />
-              <p className="text-base   font-bold text-muted-foreground"> Try Adjusting Filters ! </p>
-            </div>
+        <div className="flex flex-col items-center justify-center w-full gap-2">
+          <Image
+            src="/icons/no_notifications.svg"
+            alt="No Data Found"
+            height={400}
+            width={400}
+          />
+          <p className="text-base   font-bold text-muted-foreground">
+            {" "}
+            Try Adjusting Filters !{" "}
+          </p>
+        </div>
       )}
 
       {!isLoading && items.length > 0 && (

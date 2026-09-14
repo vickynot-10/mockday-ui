@@ -22,6 +22,7 @@ export type FilterBarProps = Omit<
   "onChange" | "defaultValue"
 > & {
   facets: Facet[];
+  multiple?: boolean;
   value?: FilterValue;
   defaultValue?: FilterValue;
   onChange?: (value: FilterValue) => void;
@@ -66,6 +67,7 @@ const FilterBar = React.forwardRef<HTMLDivElement, FilterBarProps>(
       facets,
       value: valueProp,
       defaultValue,
+      multiple = true,
       onChange,
       searchable = true,
       showCounts = true,
@@ -112,11 +114,23 @@ const FilterBar = React.forwardRef<HTMLDivElement, FilterBarProps>(
     const toggleOption = (facetId: string, optValue: string) => {
       const current = value[facetId] ?? [];
       const has = current.includes(optValue);
-      const nextList = has
-        ? current.filter((v) => v !== optValue)
-        : [...current, optValue];
+
+      let nextList: string[];
+
+      if (multiple) {
+        nextList = has
+          ? current.filter((v) => v !== optValue)
+          : [...current, optValue];
+      } else {
+        nextList = has ? [] : [optValue];
+      }
+
       const next = { ...value, [facetId]: nextList };
-      if (nextList.length === 0) delete next[facetId];
+
+      if (nextList.length === 0) {
+        delete next[facetId];
+      }
+
       commit(next);
     };
 
@@ -269,7 +283,8 @@ const FilterBar = React.forwardRef<HTMLDivElement, FilterBarProps>(
                         : { opacity: 0, scale: 0.96, y: -4 }
                     }
                     transition={spring}
-                  className="absolute top-full left-0 z-50 mt-2 w-60 origin-top-left rounded-xl border border-border bg-background p-1.5 shadow-xl" >
+                    className="absolute top-full left-0 z-50 mt-2 w-60 origin-top-left rounded-xl border border-border bg-background p-1.5 shadow-xl"
+                  >
                     {searchable && (
                       <input
                         // biome-ignore lint/a11y/noAutofocus: focus the search when the facet popover opens
